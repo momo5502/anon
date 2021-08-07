@@ -19,7 +19,7 @@ namespace
 			throw std::runtime_error("Failed to bind socket!");
 		}
 
-		console::signal_handler handler([&s]()
+		console::signal_handler handler([]()
 		{
 			
 		});
