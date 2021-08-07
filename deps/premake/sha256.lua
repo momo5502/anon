@@ -1,5 +1,5 @@
 sha256 = {
-	source = path.join(dependencies.basePath, "sha256"),
+	source = path.join(dependencies.basePath, "SHA256"),
 }
 
 function sha256.import()
