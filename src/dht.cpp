@@ -14,7 +14,7 @@ int dht_random_bytes(void *buf, const size_t size)
 		 static_cast<uint8_t*>(buf)[i] = static_cast<uint8_t>(dist(engine));
 	 }
 
-	return INT(size);
+	return static_cast<int>(size);
 }
 
 void dht_hash(void *hash_return, const int hash_size, const void *v1, const int len1, const void *v2, const int len2, const void *v3, const int len3)
@@ -45,7 +45,7 @@ int dht_blacklisted(const struct sockaddr* /*sa*/, int /*salen*/)
 int dht_sendto(const int sockfd, const void *buf, const int len, const int flags,
                const struct sockaddr *to, const int tolen)
 {
-	return sendto(static_cast<SOCKET>(sockfd), static_cast<const char*>(buf), len, flags, to, tolen);
+	return sendto(sockfd, static_cast<const char*>(buf), len, flags, to, tolen);
 }
 
 #ifdef WIN32
