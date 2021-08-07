@@ -53,15 +53,15 @@ jobs:
         uses: ammaraskar/msvc-problem-matcher@master
 
       - name: Build ${{matrix.configuration}} ${{matrix.arch}} binaries
-        run: msbuild /m /v:minimal /p:Configuration=${{matrix.configuration}} /p:Platform=${{matrix.platform}} build/xlabs-master.sln
+        run: msbuild /m /v:minimal /p:Configuration=${{matrix.configuration}} /p:Platform=${{matrix.platform}} build/anon.sln
 
       - name: Upload ${{matrix.configuration}} ${{matrix.arch}} binaries
         uses: actions/upload-artifact@v2
         with:
           name: Windows ${{matrix.configuration}} ${{matrix.arch}} binaries
           path: |
-            build/bin/${{matrix.arch}}/${{matrix.configuration}}/xlabs-master.exe
-            build/bin/${{matrix.arch}}/${{matrix.configuration}}/xlabs-master.pdb
+            build/bin/${{matrix.arch}}/${{matrix.configuration}}/anon.exe
+            build/bin/${{matrix.arch}}/${{matrix.configuration}}/anon.pdb
 
   build-lin:
     name: Build Linux
@@ -126,7 +126,7 @@ jobs:
         with:
           name: Linux ${{matrix.configuration}} ${{matrix.arch}} binaries
           path: |
-            build/bin/${{matrix.arch}}/${{matrix.configuration}}/xlabs-master
+            build/bin/${{matrix.arch}}/${{matrix.configuration}}/anon
 
   build-mac:
     name: Build macOS
@@ -182,4 +182,4 @@ jobs:
         with:
           name: macOS ${{matrix.configuration}} ${{matrix.arch}} binaries
           path: |
-            build/bin/${{matrix.platform}}/${{matrix.configuration}}/xlabs-master
+            build/bin/${{matrix.platform}}/${{matrix.configuration}}/anon
