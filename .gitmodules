@@ -1,0 +1,6 @@
+[submodule "deps/dht"]
+	path = deps/dht
+	url = https://github.com/momo5502/dht.git
+[submodule "deps/SHA256"]
+	path = deps/SHA256
+	url = https://github.com/System-Glitch/SHA256.git
