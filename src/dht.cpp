@@ -98,7 +98,7 @@ dht::dht(network::socket& socket)
 
 	dht_debug = stdout;
 	
-	dht_init(this->socket_.get_socket(), -1, id, reinterpret_cast<const unsigned char*>("JC\0\0"));
+	dht_init(static_cast<int>(this->socket_.get_socket()), -1, id, reinterpret_cast<const unsigned char*>("JC\0\0"));
 
 	this->ping(network::address{"router.bittorrent.com:6881"});
 	this->ping(network::address{"router.utorrent.com:6881"});
