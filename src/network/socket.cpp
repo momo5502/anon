@@ -4,31 +4,9 @@
 
 namespace network
 {
-	namespace
-	{
-#ifdef _WIN32
-		[[maybe_unused]] class wsa_initializer
-		{
-		public:
-			wsa_initializer()
-			{
-				WSADATA wsa_data;
-				if (WSAStartup(MAKEWORD(2, 2), &wsa_data))
-				{
-					throw std::runtime_error("Unable to initialize WSA");
-				}
-			}
-
-			~wsa_initializer()
-			{
-				WSACleanup();
-			}
-		} _;
-#endif
-	}
-
 	socket::socket()
 	{
+		initialize_wsa();
 		this->socket_ = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	}
 
@@ -125,5 +103,10 @@ namespace network
 		}
 
 		return !socket_is_ready;
+	}
+
+	SOCKET socket::get_socket() const
+	{
+		return this->socket_;
 	}
 }

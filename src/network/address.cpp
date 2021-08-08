@@ -4,8 +4,35 @@
 
 namespace network
 {
+	namespace
+	{
+		class wsa_initializer
+		{
+		public:
+			wsa_initializer()
+			{
+				WSADATA wsa_data;
+				if (WSAStartup(MAKEWORD(2, 2), &wsa_data))
+				{
+					throw std::runtime_error("Unable to initialize WSA");
+				}
+			}
+
+			~wsa_initializer()
+			{
+				WSACleanup();
+			}
+		};
+	}
+
+	void initialize_wsa()
+	{
+		static wsa_initializer wsa;
+	}
+
 	address::address()
 	{
+		initialize_wsa();
 		ZeroMemory(&this->address_, sizeof(this->address_));
 	}
 
@@ -16,6 +43,7 @@ namespace network
 	}
 
 	address::address(sockaddr_in& addr)
+		: address()
 	{
 		this->address_ = addr;
 	}

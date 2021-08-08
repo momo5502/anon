@@ -2,6 +2,8 @@
 
 namespace network
 {
+	void initialize_wsa();
+
 	class address
 	{
 	public:

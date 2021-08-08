@@ -7,6 +7,14 @@ namespace network
 	class socket
 	{
 	public:
+#ifdef _WIN32
+		using socklen_t = int;
+#else
+		using SOCKET = int;
+#define INVALID_SOCKET  (SOCKET)(~0)
+#define SOCKET_ERROR            (-1)
+#endif
+		
 		socket();
 		~socket();
 
@@ -26,15 +34,9 @@ namespace network
 		static const bool socket_is_ready = true;
 		bool sleep(std::chrono::milliseconds timeout) const;
 
-	private:
-#ifdef _WIN32
-		using socklen_t = int;
-#else
-		using SOCKET = int;
-#define INVALID_SOCKET  (SOCKET)(~0)
-#define SOCKET_ERROR            (-1)
-#endif
+		SOCKET get_socket() const;
 
+	private:
 		SOCKET socket_ = INVALID_SOCKET;
 	};
 }

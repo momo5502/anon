@@ -1,6 +1,7 @@
 #include <std_include.hpp>
 
 #include "console.hpp"
+#include "dht.hpp"
 #include "network/address.hpp"
 #include "network/socket.hpp"
 
@@ -14,18 +15,35 @@ namespace
 		a.set_port(port);
 
 		network::socket s{};
+		s.set_blocking(false);
 		if (!s.bind(a))
 		{
 			throw std::runtime_error("Failed to bind socket!");
 		}
 
-		console::signal_handler handler([]()
+		dht dht{s};
+		volatile bool kill = false;
+
+		console::signal_handler handler([&]()
 		{
-			
+			kill = true;
 		});
 
-		// TODO: Run
+		std::string data{};
+		network::address address{};
 
+		while(!kill)
+		{
+			const auto time = dht.run_frame();
+			(void)s.sleep(time);
+
+			if(s.receive(address, data))
+			{
+				dht.on_data(data, address);
+				data.clear();
+			}
+		}
+		
 		console::log("Terminating server...");
 	}
 }
