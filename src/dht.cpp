@@ -107,7 +107,7 @@ dht::dht(network::socket& socket)
 	this->ping(network::address{"dht.aelitis.com:6881"});
 	
 	dht_search(reinterpret_cast<const unsigned char*>(
-		           "\xE3\x81\x1B\x95\x39\xCA\xCF\xF6\x80\xE4\x18\x12\x42\x72\x17\x7C\x47\x47\x71\x57"), 20810, AF_INET, &dht::callback_static, this);
+		           "\xE3\x81\x1B\x95\x39\xCA\xCF\xF6\x80\xE4\x18\x12\x42\x72\x17\x7C\x47\x47\x71\x57"), 20811, AF_INET, &dht::callback_static, this);
 }
 
 dht::~dht()
