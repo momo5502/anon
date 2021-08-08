@@ -11,16 +11,20 @@ namespace network
 		public:
 			wsa_initializer()
 			{
+#ifdef _WIN32
 				WSADATA wsa_data;
 				if (WSAStartup(MAKEWORD(2, 2), &wsa_data))
 				{
 					throw std::runtime_error("Unable to initialize WSA");
 				}
+#endif
 			}
 
 			~wsa_initializer()
 			{
+#ifdef _WIN32
 				WSACleanup();
+#endif
 			}
 		};
 	}
