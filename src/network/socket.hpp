@@ -2,11 +2,6 @@
 
 #include "network/address.hpp"
 
-namespace network
-{
-	class socket
-	{
-	public:
 #ifdef _WIN32
 		using socklen_t = int;
 #else
@@ -14,7 +9,12 @@ namespace network
 #define INVALID_SOCKET  (SOCKET)(~0)
 #define SOCKET_ERROR            (-1)
 #endif
-		
+
+namespace network
+{
+	class socket
+	{
+	public:		
 		socket();
 		~socket();
 
