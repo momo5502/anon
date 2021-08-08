@@ -140,7 +140,7 @@ void dht::callback_static(void* closure, const int event, const unsigned char* i
 	static_cast<dht*>(closure)->callback(event, info_hash, data, data_len);
 }
 
-void dht::callback(int event, const unsigned char* info_hash, const void* data, size_t data_len)
+void dht::callback(int event, const unsigned char* /*info_hash*/, const void* /*data*/, size_t /*data_len*/)
 {
 	printf("Event: %d\n", event);
 }
