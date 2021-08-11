@@ -3,6 +3,8 @@
 #include "utils/io.hpp"
 #include <random>
 
+#include "console.hpp"
+
 
 int dht_random_bytes(void *buf, const size_t size)
 {
@@ -164,7 +166,7 @@ void dht::callback_static(void* closure, const int event, const unsigned char* i
 
 void dht::callback(const int event, const unsigned char* /*info_hash*/, const void* data, const size_t data_len)
 {
-	printf("Event: %d\n", event);
+	console::log("Event: %d", event);
 
 	if(event == DHT_EVENT_VALUES) {
 		std::vector<network::address> addresses{};
@@ -180,9 +182,9 @@ void dht::callback(const int event, const unsigned char* /*info_hash*/, const vo
 
 			network::address address{};
 			address.set_port(ntohs(port));
-			address.set_ipv4(std::move(ip));
+			address.set_ipv4(ip);
 			
-			addresses.emplace_back(std::move(address));
+			addresses.emplace_back(address);
 		}
 
 		this->results_(addresses);
