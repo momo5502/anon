@@ -173,12 +173,10 @@ void dht::callback(const int event, const unsigned char* /*info_hash*/, const vo
 		while ((data_len - (size_t(bytes) - size_t(data))) >= 6)
 		{
 			in_addr ip{};
-			ip.S_un.S_un_b.s_b1 = *bytes++;
-			ip.S_un.S_un_b.s_b2 = *bytes++;
-			ip.S_un.S_un_b.s_b3= *bytes++;
-			ip.S_un.S_un_b.s_b4 = *bytes++;
+			ip.s_addr = *reinterpret_cast<const decltype(ip.S_un.S_addr)*>(bytes);
+			bytes += 4;
 			
-			const auto port = static_cast<uint16_t>((static_cast<uint16_t>(*bytes++) << 16) | (*bytes++));
+			const auto port = static_cast<uint16_t>((static_cast<uint16_t>(*(bytes++)) << 16) | (*bytes++));
 
 			network::address address{};
 			address.set_port(port);
