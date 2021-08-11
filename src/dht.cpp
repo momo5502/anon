@@ -170,7 +170,7 @@ void dht::callback(const int event, const unsigned char* /*info_hash*/, const vo
 		std::vector<network::address> addresses{};
 		auto bytes = static_cast<const unsigned char*>(data);
 		
-		while ((data_len - (LPSTR(bytes) - LPSTR(data))) >= 6)
+		while ((data_len - (size_t(bytes) - size_t(data))) >= 6)
 		{
 			in_addr ip{};
 			ip.S_un.S_un_b.s_b1 = *bytes++;
@@ -178,7 +178,7 @@ void dht::callback(const int event, const unsigned char* /*info_hash*/, const vo
 			ip.S_un.S_un_b.s_b3= *bytes++;
 			ip.S_un.S_un_b.s_b4 = *bytes++;
 			
-			const auto port = static_cast<uint16_t>((*bytes++ << 16) | (*bytes++));
+			const auto port = static_cast<uint16_t>((static_cast<uint16_t>(*bytes++) << 16) | (*bytes++));
 
 			network::address address{};
 			address.set_port(port);
