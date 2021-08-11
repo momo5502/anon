@@ -176,7 +176,8 @@ void dht::callback(const int event, const unsigned char* /*info_hash*/, const vo
 			ip.s_addr = *reinterpret_cast<const decltype(ip.s_addr)*>(bytes);
 			bytes += 4;
 			
-			const auto port = static_cast<uint16_t>((static_cast<uint16_t>(*(bytes++)) << 16) | (*bytes++));
+			const auto port = static_cast<uint16_t>((static_cast<uint16_t>(*(bytes+0)) << 16) | (*bytes+1));
+			bytes += 2;
 
 			network::address address{};
 			address.set_port(port);
