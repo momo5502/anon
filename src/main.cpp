@@ -32,6 +32,11 @@ namespace
 		volatile bool kill = false;
 		console::signal_handler handler([&]()
 		{
+			if(!kill)
+			{
+				console::log("Terminating server...");
+			}
+			
 			kill = true;
 		});
 
@@ -59,8 +64,6 @@ namespace
 				dht.search("X-LABS");
 			}
 		}
-		
-		console::log("Terminating server...");
 	}
 }
 

@@ -173,14 +173,13 @@ void dht::callback(const int event, const unsigned char* /*info_hash*/, const vo
 		while ((data_len - (size_t(bytes) - size_t(data))) >= 6)
 		{
 			in_addr ip{};
-			ip.s_addr = *reinterpret_cast<const decltype(ip.s_addr)*>(bytes);
-			bytes += 4;
-			
-			const auto port = static_cast<uint16_t>((static_cast<uint16_t>(*(bytes+0)) << 16) | (*bytes+1));
-			bytes += 2;
+			uint16_t port;
+			memcpy(&ip.s_addr, bytes + 0, 4);
+			memcpy(&port, bytes + 4, 2);
+			bytes += 6;
 
 			network::address address{};
-			address.set_port(port);
+			address.set_port(ntohs(port));
 			address.set_ipv4(std::move(ip));
 			
 			addresses.emplace_back(std::move(address));
