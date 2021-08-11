@@ -23,6 +23,11 @@ namespace utils::io
 
 	bool write_file(const std::string& file, const std::string& data, const bool append)
 	{
+		return write_file(file, data.data(), data.size(), append);
+	}
+
+	bool write_file(const std::string& file, const void* data, const size_t size, const bool append)
+	{
 		const auto pos = file.find_last_of("/\\");
 		if (pos != std::string::npos)
 		{
@@ -39,7 +44,7 @@ namespace utils::io
 
 		if (stream.is_open())
 		{
-			stream.write(data.data(), data.size());
+			stream.write(static_cast<const char*>(data), static_cast<std::streamsize>(size));
 			stream.close();
 			return true;
 		}

@@ -35,8 +35,10 @@ namespace network
 		bool sleep(std::chrono::milliseconds timeout) const;
 
 		SOCKET get_socket() const;
+		uint16_t get_port() const;
 
 	private:
+		uint16_t port_ = 0;
 		SOCKET socket_ = INVALID_SOCKET;
 	};
 }

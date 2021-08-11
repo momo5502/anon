@@ -21,14 +21,22 @@ namespace
 			throw std::runtime_error("Failed to bind socket!");
 		}
 
-		dht dht{s};
+		dht dht{s, [](const std::vector<network::address>& addresses)
+		{
+			for(const auto& address : addresses)
+			{
+				console::info("%s", address.to_string().data());
+			}
+		}};
+		
 		volatile bool kill = false;
-
 		console::signal_handler handler([&]()
 		{
 			kill = true;
 		});
 
+		std::chrono::system_clock::time_point last_search{};
+		
 		std::string data{};
 		network::address address{};
 
@@ -41,6 +49,14 @@ namespace
 			{
 				dht.on_data(data, address);
 				data.clear();
+			}
+
+			const auto now = std::chrono::system_clock::now();
+			if((now - last_search) > 1min)
+			{
+				console::log("Searching...");
+				last_search = now;
+				dht.search("X-LABS");
 			}
 		}
 		

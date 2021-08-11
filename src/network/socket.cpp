@@ -41,7 +41,14 @@ namespace network
 
 	bool socket::bind(const address& target)
 	{
-		return ::bind(this->socket_, &target.get_addr(), sizeof(target.get_addr())) == 0;
+		const auto result = ::bind(this->socket_, &target.get_addr(), sizeof(target.get_addr())) == 0;
+		
+		if(result)
+		{
+			this->port_ = target.get_port();
+		}
+
+		return result;
 	}
 
 	void socket::send(const address& target, const std::string& data) const
@@ -108,5 +115,10 @@ namespace network
 	SOCKET socket::get_socket() const
 	{
 		return this->socket_;
+	}
+
+	uint16_t socket::get_port() const
+	{
+		return this->port_;
 	}
 }

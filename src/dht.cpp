@@ -1,7 +1,8 @@
 #include "std_include.hpp"
 #include "dht.hpp"
-
+#include "utils/io.hpp"
 #include <random>
+
 
 int dht_random_bytes(void *buf, const size_t size)
 {
@@ -82,10 +83,28 @@ std::atomic_bool& get_dht_barrier()
 	return barrier;
 }
 
+dht::id get_id()
+{
+	dht::id id{};
+	std::string id_data{};
+	if(utils::io::read_file("./dht.id", &id_data) && id_data.size() == id.size()) {
+		memcpy(id.data(), id_data.data(), id.size());
+		return id;
+	}
+	
+	dht::id random_data{};
+	dht_random_bytes(random_data.data(), random_data.size());
+	dht_hash(id.data(), id.size(), random_data.data(), random_data.size(), "", 0, "", 0);
+	utils::io::write_file("./dht.id",  id.data(), id.size(), false);
+
+	return id;
 }
 
-dht::dht(network::socket& socket)
-	: socket_(socket)
+}
+
+dht::dht(network::socket& socket, results results)
+	: results_(std::move(results))
+		, socket_(socket)
 {
 	bool expected = false;
 	if (!get_dht_barrier().compare_exchange_strong(expected, true))
@@ -93,21 +112,17 @@ dht::dht(network::socket& socket)
 		throw std::runtime_error("Only one DHT instance supported at a time");
 	}
 
-	unsigned char id[20];
-	dht_hash(id, sizeof(id), "h", 1, "", 0, "", 0);
+	const auto id = get_id();
 
-	dht_debug = stdout;
+	//dht_debug = stdout;
 	
-	dht_init(static_cast<int>(this->socket_.get_socket()), -1, id, reinterpret_cast<const unsigned char*>("JC\0\0"));
+	dht_init(static_cast<int>(this->socket_.get_socket()), -1, id.data(), reinterpret_cast<const unsigned char*>("JC\0\0"));
 
 	this->ping(network::address{"router.bittorrent.com:6881"});
 	this->ping(network::address{"router.utorrent.com:6881"});
 	this->ping(network::address{"router.bitcomet.com:6881"});
 	this->ping(network::address{"dht.transmissionbt.com:6881"});
 	this->ping(network::address{"dht.aelitis.com:6881"});
-	
-	dht_search(reinterpret_cast<const unsigned char*>(
-		           "\xE3\x81\x1B\x95\x39\xCA\xCF\xF6\x80\xE4\x18\x12\x42\x72\x17\x7C\x47\x47\x71\x57"), 20811, AF_INET, &dht::callback_static, this);
 }
 
 dht::~dht()
@@ -128,6 +143,13 @@ void dht::ping(const network::address& address)
 	dht_ping_node(&address.get_addr(), sizeof(address.get_in_addr()));
 }
 
+void dht::search(const std::string& keyword)
+{
+	id hash{};
+	dht_hash(hash.data(), hash.size(), keyword.data(), keyword.size(), "", 0, "", 0);	
+	dht_search(hash.data(), this->socket_.get_port(), AF_INET, &dht::callback_static, this);
+}
+
 std::chrono::milliseconds dht::run_frame()
 {
 	time_t tosleep = 0;
@@ -140,7 +162,31 @@ void dht::callback_static(void* closure, const int event, const unsigned char* i
 	static_cast<dht*>(closure)->callback(event, info_hash, data, data_len);
 }
 
-void dht::callback(int event, const unsigned char* /*info_hash*/, const void* /*data*/, size_t /*data_len*/)
+void dht::callback(const int event, const unsigned char* /*info_hash*/, const void* data, const size_t data_len)
 {
 	printf("Event: %d\n", event);
+
+	if(event == DHT_EVENT_VALUES) {
+		std::vector<network::address> addresses{};
+		auto bytes = static_cast<const unsigned char*>(data);
+		
+		while ((data_len - (LPSTR(bytes) - LPSTR(data))) >= 6)
+		{
+			in_addr ip{};
+			ip.S_un.S_un_b.s_b1 = *bytes++;
+			ip.S_un.S_un_b.s_b2 = *bytes++;
+			ip.S_un.S_un_b.s_b3= *bytes++;
+			ip.S_un.S_un_b.s_b4 = *bytes++;
+			
+			const auto port = static_cast<uint16_t>((*bytes++ << 16) | (*bytes++));
+
+			network::address address{};
+			address.set_port(port);
+			address.set_ipv4(std::move(ip));
+			
+			addresses.emplace_back(std::move(address));
+		}
+
+		this->results_(addresses);
+	}
 }
