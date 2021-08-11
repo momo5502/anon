@@ -94,7 +94,7 @@ dht::id get_id()
 	
 	dht::id random_data{};
 	dht_random_bytes(random_data.data(), random_data.size());
-	dht_hash(id.data(), id.size(), random_data.data(), random_data.size(), "", 0, "", 0);
+	dht_hash(id.data(), static_cast<int>(id.size()), random_data.data(), static_cast<int>(random_data.size()), "", 0, "", 0);
 	utils::io::write_file("./dht.id",  id.data(), id.size(), false);
 
 	return id;
@@ -146,7 +146,7 @@ void dht::ping(const network::address& address)
 void dht::search(const std::string& keyword)
 {
 	id hash{};
-	dht_hash(hash.data(), hash.size(), keyword.data(), keyword.size(), "", 0, "", 0);	
+	dht_hash(hash.data(), static_cast<int>(hash.size()), keyword.data(), static_cast<int>(keyword.size()), "", 0, "", 0);	
 	dht_search(hash.data(), this->socket_.get_port(), AF_INET, &dht::callback_static, this);
 }
 
