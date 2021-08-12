@@ -1,6 +1,8 @@
 #pragma once
 
 #include "network/socket.hpp"
+#include <array>
+#include <unordered_map>
 
 namespace std
 {
