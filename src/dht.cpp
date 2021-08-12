@@ -10,9 +10,10 @@ int dht_random_bytes(void *buf, const size_t size)
 {
 	std::random_device rd;
 	std::default_random_engine engine{rd()};
-   std::uniform_int_distribution<int> dist(0, 255);
+	std::uniform_int_distribution<int> dist(0, 255);
 
-	 for (size_t i = 0; i < size; ++i) {
+	 for (size_t i = 0; i < size; ++i)
+	 {
 		 static_cast<uint8_t*>(buf)[i] = static_cast<uint8_t>(dist(engine));
 	 }
 
@@ -78,7 +79,6 @@ extern "C" int dht_gettimeofday(struct timeval *tp, struct timezone* /*tzp*/)
 
 namespace
 {
-
 std::atomic_bool& get_dht_barrier()
 {
 	static std::atomic_bool barrier{false};
@@ -89,7 +89,8 @@ dht::id get_id()
 {
 	dht::id id{};
 	std::string id_data{};
-	if(utils::io::read_file("./dht.id", &id_data) && id_data.size() == id.size()) {
+	if(utils::io::read_file("./dht.id", &id_data) && id_data.size() == id.size())
+	{
 		memcpy(id.data(), id_data.data(), id.size());
 		return id;
 	}
@@ -101,12 +102,10 @@ dht::id get_id()
 
 	return id;
 }
-
 }
 
-dht::dht(network::socket& socket, results results)
-	: results_(std::move(results))
-		, socket_(socket)
+dht::dht(network::socket& socket)
+	: socket_(socket)
 {
 	bool expected = false;
 	if (!get_dht_barrier().compare_exchange_strong(expected, true))
@@ -145,18 +144,66 @@ void dht::ping(const network::address& address)
 	dht_ping_node(&address.get_addr(), sizeof(address.get_in_addr()));
 }
 
-void dht::search(const std::string& keyword)
+void dht::search(const std::string& keyword, results results, const uint16_t port)
 {
 	id hash{};
-	dht_hash(hash.data(), static_cast<int>(hash.size()), keyword.data(), static_cast<int>(keyword.size()), "", 0, "", 0);	
-	dht_search(hash.data(), this->socket_.get_port(), AF_INET, &dht::callback_static, this);
+	dht_hash(hash.data(), static_cast<int>(hash.size()), keyword.data(), static_cast<int>(keyword.size()), "", 0, "", 0);
+	this->search(hash, std::move(results), port);
+}
+
+void dht::search(const id& hash, results results, const uint16_t port)
+{
+	search_entry entry{};
+	entry.callback = std::move(results);
+	entry.port = port;
+	
+	this->searches_[hash] = std::move(entry);
 }
 
 std::chrono::milliseconds dht::run_frame()
 {
+	const auto now = std::chrono::system_clock::now();
+	
+	for(auto& entry : this->searches_)
+	{
+		if((now - entry.second.last_query) > 1min)
+		{
+			entry.second.last_query = now;
+			dht_search(entry.first.data(), entry.second.port, AF_INET, &dht::callback_static, this);
+		}
+	}
+	
 	time_t tosleep = 0;
 	dht_periodic(nullptr, 0, nullptr, 0, &tosleep, &dht::callback_static, this);
 	return std::chrono::seconds{tosleep};
+}
+
+void dht::handle_result(const id& id, const std::string_view& data)
+{
+	std::vector<network::address> addresses{};
+	addresses.reserve((data.size() / 6) + 1);
+	
+	size_t offset = 0;
+	while ((data.size() - offset) >= 6)
+	{
+		in_addr ip{};
+		uint16_t port;
+		memcpy(&ip.s_addr, data.data() + offset, 4);
+		memcpy(&port, data.data() + offset + 4, 2);
+		offset += 6;
+
+		network::address address{};
+		address.set_port(ntohs(port));
+		address.set_ipv4(ip);
+		
+		addresses.emplace_back(address);
+	}
+
+	const auto entry = this->searches_.find(id);
+	if (entry == this->searches_.end())
+	{
+		entry->second.callback(addresses);
+	}
 }
 
 void dht::callback_static(void* closure, const int event, const unsigned char* info_hash, const void* data, const size_t data_len)
@@ -164,29 +211,16 @@ void dht::callback_static(void* closure, const int event, const unsigned char* i
 	static_cast<dht*>(closure)->callback(event, info_hash, data, data_len);
 }
 
-void dht::callback(const int event, const unsigned char* /*info_hash*/, const void* data, const size_t data_len)
+void dht::callback(const int event, const unsigned char* info_hash, const void* data, const size_t data_len)
 {
 	console::log("Event: %d", event);
 
-	if(event == DHT_EVENT_VALUES) {
-		std::vector<network::address> addresses{};
-		auto bytes = static_cast<const unsigned char*>(data);
-		
-		while ((data_len - (size_t(bytes) - size_t(data))) >= 6)
-		{
-			in_addr ip{};
-			uint16_t port;
-			memcpy(&ip.s_addr, bytes + 0, 4);
-			memcpy(&port, bytes + 4, 2);
-			bytes += 6;
+	if(event == DHT_EVENT_VALUES)
+	{
+		id hash{};
+		memcpy(hash.data(), info_hash, hash.size());
 
-			network::address address{};
-			address.set_port(ntohs(port));
-			address.set_ipv4(ip);
-			
-			addresses.emplace_back(address);
-		}
-
-		this->results_(addresses);
+		const std::string_view data_view{static_cast<const char*>(data), data_len};
+		this->handle_result(hash, data_view);
 	}
 }
