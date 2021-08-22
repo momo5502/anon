@@ -42,8 +42,8 @@ namespace network
 	bool socket::bind(const address& target)
 	{
 		const auto result = ::bind(this->socket_, &target.get_addr(), sizeof(target.get_addr())) == 0;
-		
-		if(result)
+
+		if (result)
 		{
 			this->port_ = target.get_port();
 		}

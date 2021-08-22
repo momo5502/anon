@@ -5,22 +5,22 @@
 
 #include "console.hpp"
 
-
-int dht_random_bytes(void *buf, const size_t size)
+int dht_random_bytes(void* buf, const size_t size)
 {
 	std::random_device rd;
 	std::default_random_engine engine{rd()};
 	std::uniform_int_distribution<int> dist(0, 255);
 
-	 for (size_t i = 0; i < size; ++i)
-	 {
-		 static_cast<uint8_t*>(buf)[i] = static_cast<uint8_t>(dist(engine));
-	 }
+	for (size_t i = 0; i < size; ++i)
+	{
+		static_cast<uint8_t*>(buf)[i] = static_cast<uint8_t>(dist(engine));
+	}
 
 	return static_cast<int>(size);
 }
 
-void dht_hash(void *hash_return, const int hash_size, const void *v1, const int len1, const void *v2, const int len2, const void *v3, const int len3)
+void dht_hash(void* hash_return, const int hash_size, const void* v1, const int len1, const void* v2, const int len2,
+              const void* v3, const int len3)
 {
 	ZeroMemory(hash_return, hash_size);
 
@@ -39,7 +39,7 @@ void dht_hash(void *hash_return, const int hash_size, const void *v1, const int 
 		{
 			hash.update(static_cast<const uint8_t*>(hash_return), hash_size);
 		}
-		
+
 		static_cast<uint8_t*>(hash_return)[i] = hash.digest()[i % 32];
 	}
 }
@@ -49,14 +49,14 @@ int dht_blacklisted(const struct sockaddr* /*sa*/, int /*salen*/)
 	return 0;
 }
 
-int dht_sendto(const int sockfd, const void *buf, const int len, const int flags,
-               const struct sockaddr *to, const int tolen)
+int dht_sendto(const int sockfd, const void* buf, const int len, const int flags,
+               const struct sockaddr* to, const int tolen)
 {
 	return sendto(sockfd, static_cast<const char*>(buf), len, flags, to, tolen);
 }
 
 #ifdef WIN32
-extern "C" int dht_gettimeofday(struct timeval *tp, struct timezone* /*tzp*/)
+extern "C" int dht_gettimeofday(struct timeval* tp, struct timezone* /*tzp*/)
 {
 	static const uint64_t epoch = 116444736000000000ULL;
 
@@ -79,29 +79,30 @@ extern "C" int dht_gettimeofday(struct timeval *tp, struct timezone* /*tzp*/)
 
 namespace
 {
-std::atomic_bool& get_dht_barrier()
-{
-	static std::atomic_bool barrier{false};
-	return barrier;
-}
-
-dht::id get_id()
-{
-	dht::id id{};
-	std::string id_data{};
-	if(utils::io::read_file("./dht.id", &id_data) && id_data.size() == id.size())
+	std::atomic_bool& get_dht_barrier()
 	{
-		memcpy(id.data(), id_data.data(), id.size());
+		static std::atomic_bool barrier{false};
+		return barrier;
+	}
+
+	dht::id get_id()
+	{
+		dht::id id{};
+		std::string id_data{};
+		if (utils::io::read_file("./dht.id", &id_data) && id_data.size() == id.size())
+		{
+			memcpy(id.data(), id_data.data(), id.size());
+			return id;
+		}
+
+		dht::id random_data{};
+		dht_random_bytes(random_data.data(), random_data.size());
+		dht_hash(id.data(), static_cast<int>(id.size()), random_data.data(), static_cast<int>(random_data.size()), "",
+		         0, "", 0);
+		utils::io::write_file("./dht.id", id.data(), id.size(), false);
+
 		return id;
 	}
-	
-	dht::id random_data{};
-	dht_random_bytes(random_data.data(), random_data.size());
-	dht_hash(id.data(), static_cast<int>(id.size()), random_data.data(), static_cast<int>(random_data.size()), "", 0, "", 0);
-	utils::io::write_file("./dht.id",  id.data(), id.size(), false);
-
-	return id;
-}
 }
 
 dht::dht(network::socket& socket)
@@ -116,8 +117,9 @@ dht::dht(network::socket& socket)
 	const auto id = get_id();
 
 	//dht_debug = stdout;
-	
-	dht_init(static_cast<int>(this->socket_.get_socket()), -1, id.data(), reinterpret_cast<const unsigned char*>("JC\0\0"));
+
+	dht_init(static_cast<int>(this->socket_.get_socket()), -1, id.data(),
+	         reinterpret_cast<const unsigned char*>("JC\0\0"));
 
 	this->ping(network::address{"router.bittorrent.com:6881"});
 	this->ping(network::address{"router.utorrent.com:6881"});
@@ -147,7 +149,8 @@ void dht::ping(const network::address& address)
 void dht::search(const std::string& keyword, results results, const uint16_t port)
 {
 	id hash{};
-	dht_hash(hash.data(), static_cast<int>(hash.size()), keyword.data(), static_cast<int>(keyword.size()), "", 0, "", 0);
+	dht_hash(hash.data(), static_cast<int>(hash.size()), keyword.data(), static_cast<int>(keyword.size()), "", 0, "",
+	         0);
 	this->search(hash, std::move(results), port);
 }
 
@@ -156,23 +159,23 @@ void dht::search(const id& hash, results results, const uint16_t port)
 	search_entry entry{};
 	entry.callback = std::move(results);
 	entry.port = port;
-	
+
 	this->searches_[hash] = std::move(entry);
 }
 
 std::chrono::milliseconds dht::run_frame()
 {
 	const auto now = std::chrono::system_clock::now();
-	
-	for(auto& entry : this->searches_)
+
+	for (auto& entry : this->searches_)
 	{
-		if((now - entry.second.last_query) > 1min)
+		if ((now - entry.second.last_query) > 1min)
 		{
 			entry.second.last_query = now;
 			dht_search(entry.first.data(), entry.second.port, AF_INET, &dht::callback_static, this);
 		}
 	}
-	
+
 	time_t tosleep = 0;
 	dht_periodic(nullptr, 0, nullptr, 0, &tosleep, &dht::callback_static, this);
 	return std::chrono::seconds{tosleep};
@@ -182,7 +185,7 @@ void dht::handle_result(const id& id, const std::string_view& data)
 {
 	std::vector<network::address> addresses{};
 	addresses.reserve((data.size() / 6) + 1);
-	
+
 	size_t offset = 0;
 	while ((data.size() - offset) >= 6)
 	{
@@ -195,7 +198,7 @@ void dht::handle_result(const id& id, const std::string_view& data)
 		network::address address{};
 		address.set_port(ntohs(port));
 		address.set_ipv4(ip);
-		
+
 		addresses.emplace_back(address);
 	}
 
@@ -206,7 +209,8 @@ void dht::handle_result(const id& id, const std::string_view& data)
 	}
 }
 
-void dht::callback_static(void* closure, const int event, const unsigned char* info_hash, const void* data, const size_t data_len)
+void dht::callback_static(void* closure, const int event, const unsigned char* info_hash, const void* data,
+                          const size_t data_len)
 {
 	static_cast<dht*>(closure)->callback(event, info_hash, data, data_len);
 }
@@ -215,7 +219,7 @@ void dht::callback(const int event, const unsigned char* info_hash, const void* 
 {
 	console::log("Event: %d", event);
 
-	if(event == DHT_EVENT_VALUES)
+	if (event == DHT_EVENT_VALUES)
 	{
 		id hash{};
 		memcpy(hash.data(), info_hash, hash.size());

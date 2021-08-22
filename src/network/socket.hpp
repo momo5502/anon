@@ -3,7 +3,7 @@
 #include "network/address.hpp"
 
 #ifdef _WIN32
-		using socklen_t = int;
+using socklen_t = int;
 #else
 		using SOCKET = int;
 #define INVALID_SOCKET  (SOCKET)(~0)
@@ -14,7 +14,7 @@ namespace network
 {
 	class socket
 	{
-	public:		
+	public:
 		socket();
 		~socket();
 

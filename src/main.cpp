@@ -22,15 +22,15 @@ namespace
 		}
 
 		dht dht{s};
-		
+
 		volatile bool kill = false;
 		console::signal_handler handler([&]()
 		{
-			if(!kill)
+			if (!kill)
 			{
 				console::log("Terminating server...");
 			}
-			
+
 			kill = true;
 		});
 
@@ -41,16 +41,16 @@ namespace
 				console::info("%s", address.to_string().data());
 			}
 		}, s.get_port());
-		
+
 		std::string data{};
 		network::address address{};
 
-		while(!kill)
+		while (!kill)
 		{
 			const auto time = dht.run_frame();
 			(void)s.sleep(time);
 
-			if(s.receive(address, data))
+			if (s.receive(address, data))
 			{
 				dht.on_data(data, address);
 				data.clear();
