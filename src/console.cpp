@@ -211,6 +211,11 @@ namespace console
 		va_end(ap);
 	}
 
+	void new_line()
+	{
+		putchar('\n');
+	}
+
 	void set_title(const std::string& title)
 	{
 		lock _{};

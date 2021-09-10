@@ -21,6 +21,8 @@ namespace console
 	void error(const char* message, ...);
 	void log(const char* message, ...);
 
+	void new_line();
+
 	void set_title(const std::string& title);
 
 	class signal_handler : std::lock_guard<std::mutex>

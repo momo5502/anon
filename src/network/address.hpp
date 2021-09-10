@@ -9,16 +9,26 @@ namespace network
 	public:
 		address();
 		address(const std::string& addr);
-		address(sockaddr_in& addr);
+		address(const sockaddr_in& addr);
+		address(const sockaddr_in6& addr);
+		address(const sockaddr* addr, int length);
 
 		void set_ipv4(in_addr addr);
+		void set_ipv6(in6_addr addr);
+		void set_address(const sockaddr* addr, int length);
+
 		void set_port(unsigned short port);
 		[[nodiscard]] unsigned short get_port() const;
 
 		sockaddr& get_addr();
-		const sockaddr& get_addr() const;
 		sockaddr_in& get_in_addr();
+		sockaddr_in6& get_in6_addr();
+
+		const sockaddr& get_addr() const;
 		const sockaddr_in& get_in_addr() const;
+		const sockaddr_in6& get_in6_addr() const;
+
+		int get_size() const;
 
 		[[nodiscard]] bool is_local() const;
 		[[nodiscard]] std::string to_string() const;
@@ -31,7 +41,12 @@ namespace network
 		}
 
 	private:
-		sockaddr_in address_{};
+		union
+		{
+			sockaddr address_;
+			sockaddr_in address4_;
+			sockaddr_in6 address6_;
+		};
 
 		void parse(std::string addr);
 		void resolve(const std::string& hostname);

@@ -2,6 +2,8 @@
 
 #include "network/socket.hpp"
 #include <array>
+#include <atomic>
+#include <string_view>
 #include <unordered_map>
 
 namespace std
@@ -28,10 +30,17 @@ namespace std
 class dht
 {
 public:
+	enum class protocol 
+	{
+		v4,
+		v6,
+	};
+
 	using id = std::array<unsigned char, 20>;
 	using results = std::function<void(const std::vector<network::address>&)>;
+	using data_transmitter = std::function<void(protocol, const network::address& destination, const std::string& data)>;
 
-	dht(network::socket& socket);
+	dht(data_transmitter transmitter);
 	~dht();
 
 	dht(const dht&) = delete;
@@ -40,13 +49,16 @@ public:
 	dht(dht&&) = delete;
 	dht& operator=(dht&&) = delete;
 
-	void on_data(const std::string& data, const network::address& address);
-
 	void ping(const network::address& address);
 	void search(const std::string& keyword, results results, uint16_t port);
 	void search(const id& hash, results results, uint16_t port);
 
 	std::chrono::milliseconds run_frame();
+	std::chrono::high_resolution_clock::time_point run_frame_time_point();
+    
+	void on_data(protocol protocol, const network::address& address, const std::string& data);
+	int on_send(protocol protocol, const void* buf, const int len, const int flags,
+               const struct sockaddr* to, const int tolen);
 
 private:
 	struct search_entry
@@ -56,7 +68,7 @@ private:
 		std::chrono::system_clock::time_point last_query{};
 	};
 
-	network::socket& socket_;
+	data_transmitter transmitter_;
 	std::unordered_map<id, search_entry> searches_;
 
 	void handle_result(const id& id, const std::string_view& data);

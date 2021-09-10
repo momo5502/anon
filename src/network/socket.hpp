@@ -33,6 +33,7 @@ namespace network
 
 		static const bool socket_is_ready = true;
 		bool sleep(std::chrono::milliseconds timeout) const;
+		bool sleep_until(std::chrono::high_resolution_clock::time_point time_point);
 
 		SOCKET get_socket() const;
 		uint16_t get_port() const;
