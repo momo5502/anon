@@ -286,7 +286,7 @@ namespace network
 			{
 				if (!(i->ai_addr->sa_family != AF_INET && i->ai_addr->sa_family != AF_INET6))
 				{
-					this->set_address(i->ai_addr, i->ai_addrlen);
+					this->set_address(i->ai_addr, static_cast<int>(i->ai_addrlen));
 					this->set_port(port);
 					break;
 				}
