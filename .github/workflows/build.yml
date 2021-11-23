@@ -130,7 +130,7 @@ jobs:
 
   build-mac:
     name: Build macOS
-    runs-on: macos-latest
+    runs-on: macOS-11 #macos-latest
     strategy:
       fail-fast: false
       matrix:
@@ -139,7 +139,7 @@ jobs:
           - Release
         arch:
           - x64
-          #- ARM
+          - ARM
         include:
           - configuration: Debug
             config: debug
@@ -147,8 +147,8 @@ jobs:
             config: release
           - arch: x64
             platform: x64
-          #- arch: ARM
-          #  platform: arm
+          - arch: ARM
+            platform: arm
     steps:
       - name: Wait for previous workflows
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
