@@ -1,6 +1,7 @@
 #include "std_include.hpp"
 
 #include "network/address.hpp"
+#include "utils/finally.hpp"
 #include <optional>
 #include <string_view>
 
@@ -65,16 +66,16 @@ namespace network
 	{
 		this->set_address(addr, length);
 	}
-	
+
 
 	bool address::operator==(const address& obj) const
 	{
-		if(this->address_.sa_family != obj.address_.sa_family)
+		if (this->address_.sa_family != obj.address_.sa_family)
 		{
 			return false;
 		}
 
-		if(this->get_port() != obj.get_port())
+		if (this->get_port() != obj.get_port())
 		{
 			return false;
 		}
@@ -85,7 +86,8 @@ namespace network
 		}
 		else if (this->address_.sa_family == AF_INET6)
 		{
-			return !memcmp(this->address6_.sin6_addr.s6_addr, obj.address6_.sin6_addr.s6_addr, sizeof(obj.address6_.sin6_addr.s6_addr));
+			return !memcmp(this->address6_.sin6_addr.s6_addr, obj.address6_.sin6_addr.s6_addr,
+			               sizeof(obj.address6_.sin6_addr.s6_addr));
 		}
 
 		return false;
@@ -107,11 +109,11 @@ namespace network
 
 	void address::set_address(const sockaddr* addr, const int length)
 	{
-		if(static_cast<size_t>(length) >= sizeof(sockaddr_in) && addr->sa_family == AF_INET)
+		if (static_cast<size_t>(length) >= sizeof(sockaddr_in) && addr->sa_family == AF_INET)
 		{
 			this->address4_ = *reinterpret_cast<const sockaddr_in*>(addr);
 		}
-		else if(static_cast<size_t>(length) == sizeof(sockaddr_in6) && addr->sa_family == AF_INET6)
+		else if (static_cast<size_t>(length) == sizeof(sockaddr_in6) && addr->sa_family == AF_INET6)
 		{
 			this->address6_ = *reinterpret_cast<const sockaddr_in6*>(addr);
 		}
@@ -123,7 +125,7 @@ namespace network
 
 	void address::set_port(const unsigned short port)
 	{
-		switch(this->address_.sa_family)
+		switch (this->address_.sa_family)
 		{
 		case AF_INET:
 			this->address4_.sin_port = htons(port);
@@ -138,7 +140,7 @@ namespace network
 
 	unsigned short address::get_port() const
 	{
-		switch(this->address_.sa_family)
+		switch (this->address_.sa_family)
 		{
 		case AF_INET:
 			return ntohs(this->address4_.sin_port);
@@ -152,8 +154,8 @@ namespace network
 	std::string address::to_string() const
 	{
 		char buffer[1000] = {0};
-		
-		switch(this->address_.sa_family)
+
+		switch (this->address_.sa_family)
 		{
 		case AF_INET:
 			inet_ntop(this->address_.sa_family, &this->address4_.sin_addr, buffer, sizeof(buffer));
@@ -172,7 +174,7 @@ namespace network
 
 	bool address::is_local() const
 	{
-		if(this->address_.sa_family != AF_INET)
+		if (this->address_.sa_family != AF_INET)
 		{
 			return false;
 		}
@@ -244,7 +246,7 @@ namespace network
 
 	int address::get_size() const
 	{
-		switch(this->address_.sa_family)
+		switch (this->address_.sa_family)
 		{
 		case AF_INET:
 			return static_cast<int>(sizeof(this->address4_));
@@ -269,7 +271,7 @@ namespace network
 
 		this->resolve(addr);
 
-		if(port_value)
+		if (port_value)
 		{
 			this->set_port(*port_value);
 		}
@@ -278,22 +280,31 @@ namespace network
 	void address::resolve(const std::string& hostname)
 	{
 		const auto port = this->get_port();
+		auto port_reset_action = utils::finally([this, port]()
+		{
+			this->set_port(port);
+		});
 
 		addrinfo* result = nullptr;
 		if (!getaddrinfo(hostname.data(), nullptr, nullptr, &result))
 		{
+			const auto _2 = utils::finally([&result]()
+			{
+				freeaddrinfo(result);
+			});
+
 			for (auto* i = result; i; i = i->ai_next)
 			{
-				if (!(i->ai_addr->sa_family != AF_INET && i->ai_addr->sa_family != AF_INET6))
+				if (i->ai_addr->sa_family == AF_INET || i->ai_addr->sa_family == AF_INET6)
 				{
 					this->set_address(i->ai_addr, static_cast<int>(i->ai_addrlen));
-					this->set_port(port);
-					break;
+					return;
 				}
 			}
-
-			freeaddrinfo(result);
 		}
+
+		port_reset_action.cancel();
+		throw std::runtime_error{"Unable to resolve hostname: " + hostname};
 	}
 }
 
@@ -304,13 +315,16 @@ std::size_t std::hash<network::address>::operator()(const network::address& a) c
 
 	std::size_t hash = std::hash<uint32_t>{}(family);
 	hash ^= std::hash<uint32_t>{}(port);
-	switch(a.get_addr().sa_family)
+	switch (a.get_addr().sa_family)
 	{
 	case AF_INET:
 		hash ^= std::hash<decltype(a.get_in_addr().sin_addr.s_addr)>{}(a.get_in_addr().sin_addr.s_addr);
 		break;
 	case AF_INET6:
-		hash ^= std::hash<std::string_view>{}(std::string_view{reinterpret_cast<const char*>(a.get_in6_addr().sin6_addr.s6_addr), sizeof(a.get_in6_addr().sin6_addr.s6_addr)});
+		hash ^= std::hash<std::string_view>{}(std::string_view{
+			reinterpret_cast<const char*>(a.get_in6_addr().sin6_addr.s6_addr),
+			sizeof(a.get_in6_addr().sin6_addr.s6_addr)
+		});
 		break;
 	}
 

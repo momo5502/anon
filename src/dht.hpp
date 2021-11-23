@@ -49,6 +49,7 @@ public:
 	dht(dht&&) = delete;
 	dht& operator=(dht&&) = delete;
 
+	bool try_ping(const std::string& address);
 	void ping(const network::address& address);
 	void search(const std::string& keyword, results results, uint16_t port);
 	void search(const id& hash, results results, uint16_t port);

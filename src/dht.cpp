@@ -28,9 +28,9 @@ namespace
 	void delete_fd_mappings(dht& dht)
 	{
 		auto& fd_mappings = get_fd_mapping();
-		for(auto i = fd_mappings.begin(); i != fd_mappings.end();)
+		for (auto i = fd_mappings.begin(); i != fd_mappings.end();)
 		{
-			if(i->second.second != &dht)
+			if (i->second.second != &dht)
 			{
 				++i;
 				continue;
@@ -47,7 +47,7 @@ namespace
 		return fd;
 	}
 
-	const std::pair<dht::protocol, dht*>& get_fd_mapping_entry(int fd)
+	const std::pair<dht::protocol, dht*>& get_fd_mapping_entry(const int fd)
 	{
 		return get_fd_mapping().at(fd);
 	}
@@ -128,18 +128,18 @@ extern "C" int dht_gettimeofday(struct timeval* tp, struct timezone* /*tzp*/)
 {
 	static const uint64_t epoch = 116444736000000000ULL;
 
-	SYSTEMTIME systemTime;
-	GetSystemTime(&systemTime);
+	SYSTEMTIME system_time;
+	GetSystemTime(&system_time);
 
-	FILETIME fileTime;
-	SystemTimeToFileTime(&systemTime, &fileTime);
+	FILETIME file_time;
+	SystemTimeToFileTime(&system_time, &file_time);
 
 	ULARGE_INTEGER ularge;
-	ularge.LowPart = fileTime.dwLowDateTime;
-	ularge.HighPart = fileTime.dwHighDateTime;
+	ularge.LowPart = file_time.dwLowDateTime;
+	ularge.HighPart = file_time.dwHighDateTime;
 
 	tp->tv_sec = LONG((ularge.QuadPart - epoch) / 10000000L);
-	tp->tv_usec = LONG(systemTime.wMilliseconds * 1000);
+	tp->tv_usec = LONG(system_time.wMilliseconds * 1000);
 
 	return 0;
 }
@@ -159,16 +159,18 @@ dht::dht(data_transmitter transmitter)
 	const auto fd_v4 = store_fd_mapping(protocol::v4, *this);
 	const auto fd_v6 = store_fd_mapping(protocol::v6, *this);
 
-	//dht_debug = stdout;
+#ifndef NDEBUG
+	dht_debug = stdout;
+#endif
 
 	dht_init(fd_v4, fd_v6, id.data(),
 	         reinterpret_cast<const unsigned char*>("JC\0\0"));
 
-	this->ping(network::address{"router.bittorrent.com:6881"});
-	this->ping(network::address{"router.utorrent.com:6881"});
-	this->ping(network::address{"router.bitcomet.com:6881"});
-	this->ping(network::address{"dht.transmissionbt.com:6881"});
-	this->ping(network::address{"dht.aelitis.com:6881"});
+	this->try_ping("router.bittorrent.com:6881");
+	this->try_ping("router.utorrent.com:6881");
+	this->try_ping("router.bitcomet.com:6881");
+	this->try_ping("dht.transmissionbt.com:6881");
+	this->try_ping("dht.aelitis.com:6881");
 }
 
 dht::~dht()
@@ -186,12 +188,25 @@ void dht::on_data(protocol /*protocol*/, const network::address& address, const 
 }
 
 int dht::on_send(protocol protocol, const void* buf, const int len, const int /*flags*/,
-               const struct sockaddr* to, const int /*tolen*/)
+                 const struct sockaddr* to, const int /*tolen*/)
 {
-	network::address target{*reinterpret_cast<const sockaddr_in*>(to)};
-	std::string string{reinterpret_cast<const char*>(buf), static_cast<size_t>(len)};
+	const network::address target{*reinterpret_cast<const sockaddr_in*>(to)};
+	const std::string string{reinterpret_cast<const char*>(buf), static_cast<size_t>(len)};
 	this->transmitter_(protocol, target, string);
 	return len;
+}
+
+bool dht::try_ping(const std::string& address)
+{
+	try
+	{
+		this->ping(network::address{address});
+		return true;
+	}
+	catch (...)
+	{
+	}
+	return false;
 }
 
 void dht::ping(const network::address& address)

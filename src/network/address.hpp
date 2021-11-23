@@ -43,7 +43,7 @@ namespace network
 	private:
 		union
 		{
-			sockaddr address_;
+			sockaddr address_{};
 			sockaddr_in address4_;
 			sockaddr_in6 address6_;
 		};

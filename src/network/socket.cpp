@@ -112,7 +112,7 @@ namespace network
 		return !socket_is_ready;
 	}
 
-	bool socket::sleep_until(std::chrono::high_resolution_clock::time_point time_point)
+	bool socket::sleep_until(const std::chrono::high_resolution_clock::time_point time_point) const
 	{
 		const auto duration = time_point - std::chrono::high_resolution_clock::now();
 		return this->sleep(std::chrono::duration_cast<std::chrono::milliseconds>(duration));
