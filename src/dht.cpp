@@ -294,7 +294,7 @@ void dht::handle_result_v6(const id& id, const std::string_view& data)
 		uint16_t port;
 		memcpy(&ip.s6_addr, data.data() + offset, 16);
 		memcpy(&port, data.data() + offset + 16, 2);
-		offset += 16;
+		offset += 18;
 
 		network::address address{};
 		address.set_ipv6(ip);
