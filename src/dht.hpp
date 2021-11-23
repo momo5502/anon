@@ -72,7 +72,8 @@ private:
 	data_transmitter transmitter_;
 	std::unordered_map<id, search_entry> searches_;
 
-	void handle_result(const id& id, const std::string_view& data);
+	void handle_result_v4(const id& id, const std::string_view& data);
+	void handle_result_v6(const id& id, const std::string_view& data);
 
 	static void callback_static(void* closure, int event, const unsigned char* info_hash, const void* data,
 	                            size_t data_len);

@@ -254,7 +254,7 @@ std::chrono::high_resolution_clock::time_point dht::run_frame_time_point()
 	return this->run_frame() + std::chrono::high_resolution_clock::now();
 }
 
-void dht::handle_result(const id& id, const std::string_view& data)
+void dht::handle_result_v4(const id& id, const std::string_view& data)
 {
 	std::vector<network::address> addresses{};
 	addresses.reserve((data.size() / 6) + 1);
@@ -269,8 +269,36 @@ void dht::handle_result(const id& id, const std::string_view& data)
 		offset += 6;
 
 		network::address address{};
-		address.set_port(ntohs(port));
 		address.set_ipv4(ip);
+		address.set_port(ntohs(port));
+
+		addresses.emplace_back(address);
+	}
+
+	const auto entry = this->searches_.find(id);
+	if (entry == this->searches_.end())
+	{
+		entry->second.callback(addresses);
+	}
+}
+
+void dht::handle_result_v6(const id& id, const std::string_view& data)
+{
+	std::vector<network::address> addresses{};
+	addresses.reserve((data.size() / 18) + 1);
+
+	size_t offset = 0;
+	while ((data.size() - offset) >= 18)
+	{
+		in6_addr ip{};
+		uint16_t port;
+		memcpy(&ip.s6_bytes, data.data() + offset, 16);
+		memcpy(&port, data.data() + offset + 16, 2);
+		offset += 16;
+
+		network::address address{};
+		address.set_ipv6(ip);
+		address.set_port(ntohs(port));
 
 		addresses.emplace_back(address);
 	}
@@ -298,6 +326,14 @@ void dht::callback(const int event, const unsigned char* info_hash, const void* 
 		memcpy(hash.data(), info_hash, hash.size());
 
 		const std::string_view data_view{static_cast<const char*>(data), data_len};
-		this->handle_result(hash, data_view);
+		this->handle_result_v4(hash, data_view);
+	}
+	else if (event == DHT_EVENT_VALUES6)
+	{
+		id hash{};
+		memcpy(hash.data(), info_hash, hash.size());
+
+		const std::string_view data_view{static_cast<const char*>(data), data_len};
+		this->handle_result_v6(hash, data_view);
 	}
 }
