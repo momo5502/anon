@@ -278,7 +278,7 @@ void dht::handle_result_v4(const id& id, const std::string_view& data)
 	console::info("Received %zu IPv4 addresses", addresses.size());
 
 	const auto entry = this->searches_.find(id);
-	if (entry == this->searches_.end())
+	if (entry != this->searches_.end())
 	{
 		entry->second.callback(addresses);
 	}
@@ -308,7 +308,7 @@ void dht::handle_result_v6(const id& id, const std::string_view& data)
 	console::info("Received %zu IPv6 addresses", addresses.size());
 
 	const auto entry = this->searches_.find(id);
-	if (entry == this->searches_.end())
+	if (entry != this->searches_.end())
 	{
 		entry->second.callback(addresses);
 	}
