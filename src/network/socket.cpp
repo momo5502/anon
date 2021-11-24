@@ -4,10 +4,10 @@
 
 namespace network
 {
-	socket::socket()
+	socket::socket(const int af)
 	{
 		initialize_wsa();
-		this->socket_ = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+		this->socket_ = ::socket(af, SOCK_DGRAM, IPPROTO_UDP);
 	}
 
 	socket::~socket()

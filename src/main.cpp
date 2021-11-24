@@ -14,20 +14,22 @@ namespace
 		network::address a{"0.0.0.0"};
 		a.set_port(port);
 
-		network::socket s{};
+		network::socket s{AF_INET};
 		s.set_blocking(false);
 		if (!s.bind(a))
 		{
 			throw std::runtime_error("Failed to bind socket!");
 		}
 
-		dht dht{[&s](const dht::protocol protocol, const network::address& destination, const std::string& data)
-		{
-			if(protocol == dht::protocol::v4)
+		dht dht{
+			[&s](const dht::protocol protocol, const network::address& destination, const std::string& data)
 			{
-				s.send(destination, data);
+				if (protocol == dht::protocol::v4)
+				{
+					s.send(destination, data);
+				}
 			}
-		}};
+		};
 
 		volatile bool kill = false;
 		console::signal_handler handler([&]()

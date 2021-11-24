@@ -15,7 +15,7 @@ namespace network
 	class socket
 	{
 	public:
-		socket();
+		socket(int af = AF_INET);
 		~socket();
 
 		socket(const socket& obj) = delete;

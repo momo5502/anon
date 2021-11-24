@@ -52,7 +52,8 @@ namespace
 		return get_fd_mapping().at(fd);
 	}
 
-	struct dht_store {
+	struct dht_store
+	{
 		dht::id id{};
 		std::vector<dht::node> nodes{};
 	};
@@ -64,11 +65,15 @@ namespace
 
 		std::vector<dht::node> ipv4_nodes{};
 		std::vector<dht::node> ipv6_nodes{};
-		
-		for(const auto& node : store.nodes) {
-			if(node.address.is_ipv4()) {
+
+		for (const auto& node : store.nodes)
+		{
+			if (node.address.is_ipv4())
+			{
 				ipv4_nodes.emplace_back(node);
-			} else if(node.address.is_ipv6()) {
+			}
+			else if (node.address.is_ipv6())
+			{
 				ipv6_nodes.emplace_back(node);
 			}
 		}
@@ -79,7 +84,8 @@ namespace
 		data.append(reinterpret_cast<const char*>(&ipv4_node_count), sizeof(ipv4_node_count));
 		data.append(reinterpret_cast<const char*>(&ipv6_node_count), sizeof(ipv6_node_count));
 
-		for(const auto& node : ipv4_nodes) {
+		for (const auto& node : ipv4_nodes)
+		{
 			data.append(reinterpret_cast<const char*>(node.id_.data()), node.id_.size());
 
 			const auto& in_addr = node.address.get_in_addr();
@@ -90,11 +96,12 @@ namespace
 			const auto port = node.address.get_port();
 			const auto port_size = sizeof(port);
 			static_assert(port_size == 2);
-			
+
 			data.append(reinterpret_cast<const char*>(&port), port_size);
 		}
 
-		for(const auto& node : ipv6_nodes) {
+		for (const auto& node : ipv6_nodes)
+		{
 			data.append(reinterpret_cast<const char*>(node.id_.data()), node.id_.size());
 
 			const auto& in6_addr = node.address.get_in6_addr();
@@ -105,7 +112,7 @@ namespace
 			const auto port = node.address.get_port();
 			const auto port_size = sizeof(port);
 			static_assert(port_size == 2);
-			
+
 			data.append(reinterpret_cast<const char*>(&port), port_size);
 		}
 
@@ -125,8 +132,9 @@ namespace
 		dht_random_bytes(random_data.data(), random_data.size());
 
 		dht_store store{};
-		dht_hash(store.id.data(), static_cast<int>(store.id.size()), random_data.data(), static_cast<int>(random_data.size()), "",
-	         0, "", 0);
+		dht_hash(store.id.data(), static_cast<int>(store.id.size()), random_data.data(),
+		         static_cast<int>(random_data.size()), "",
+		         0, "", 0);
 
 		save_dht_store(store);
 		return store;
@@ -139,11 +147,13 @@ namespace
 		uint32_t ipv6_node_count{};
 
 		size_t offset = 0;
-		const auto read_data = [&data, &offset](void* destination, const size_t size) {
-			if((offset + size) > data.size()) {
+		const auto read_data = [&data, &offset](void* destination, const size_t size)
+		{
+			if ((offset + size) > data.size())
+			{
 				throw std::runtime_error{"Serialized dht store is corrupted"};
 			}
-			
+
 			memcpy(destination, data.data() + offset, size);
 			offset += size;
 		};
@@ -151,10 +161,11 @@ namespace
 		read_data(store.id.data(), store.id.size());
 		read_data(&ipv4_node_count, sizeof(ipv4_node_count));
 		read_data(&ipv6_node_count, sizeof(ipv6_node_count));
-		
+
 		store.nodes.reserve(static_cast<size_t>(ipv4_node_count) + static_cast<size_t>(ipv6_node_count));
-		
-		for(uint32_t i = 0; i < ipv4_node_count; ++i) {
+
+		for (uint32_t i = 0; i < ipv4_node_count; ++i)
+		{
 			dht::node node{};
 
 			read_data(node.id_.data(), node.id_.size());
@@ -162,7 +173,7 @@ namespace
 			in_addr address{};
 			static_assert(sizeof(address) == 4);
 			read_data(&address, sizeof(address));
-			
+
 			uint16_t port{};
 			static_assert(sizeof(port) == 2);
 
@@ -174,7 +185,8 @@ namespace
 			store.nodes.emplace_back(std::move(node));
 		}
 
-		for(uint32_t i = 0; i < ipv4_node_count; ++i) {
+		for (uint32_t i = 0; i < ipv4_node_count; ++i)
+		{
 			dht::node node{};
 
 			read_data(node.id_.data(), node.id_.size());
@@ -182,7 +194,7 @@ namespace
 			in6_addr address{};
 			static_assert(sizeof(address) == 16);
 			read_data(&address, sizeof(address));
-			
+
 			uint16_t port{};
 			static_assert(sizeof(port) == 2);
 
@@ -207,7 +219,8 @@ namespace
 				return deserialize_dht_store(data);
 			}
 		}
-		catch(...) {
+		catch (...)
+		{
 		}
 
 		return create_new_dht_store();
@@ -315,7 +328,8 @@ dht::dht(data_transmitter transmitter)
 	this->try_ping("dht.transmissionbt.com:6881");
 	this->try_ping("dht.aelitis.com:6881");
 
-	for(const auto& node : store.nodes) {
+	for (const auto& node : store.nodes)
+	{
 		this->insert_node(node);
 	}
 }
@@ -323,7 +337,7 @@ dht::dht(data_transmitter transmitter)
 dht::~dht()
 {
 	this->save_state();
-	
+
 	dht_uninit();
 	delete_fd_mappings(*this);
 	get_dht_barrier().store(false);
@@ -508,8 +522,8 @@ void dht::save_state() const
 	int good_nodes{};
 	int dubious_nodes{};
 	int cached_nodes{};
-    int incoming_nodes{};
-	
+	int incoming_nodes{};
+
 	dht_nodes(AF_INET, &good_nodes, &dubious_nodes, &cached_nodes, &incoming_nodes);
 	num = good_nodes + dubious_nodes + cached_nodes + incoming_nodes;
 
@@ -533,15 +547,17 @@ void dht::save_state() const
 	const auto ipv4_nodes = std::min(addresses.size(), static_cast<size_t>(num));
 	const auto ipv6_nodes = std::min(addresses6.size(), static_cast<size_t>(num6));
 	store.nodes.reserve(ipv4_nodes + ipv6_nodes);
-	
-	for(size_t i = 0; i < ipv4_nodes; ++i) {
+
+	for (size_t i = 0; i < ipv4_nodes; ++i)
+	{
 		node node{};
 		memcpy(node.id_.data(), ids.data() + i * id_size, node.id_.size());
 		memcpy(&node.address.get_in_addr(), &addresses.at(i), sizeof(sockaddr_in));
 		store.nodes.emplace_back(std::move(node));
 	}
 
-	for(size_t i = 0; i < ipv6_nodes; ++i) {
+	for (size_t i = 0; i < ipv6_nodes; ++i)
+	{
 		node node{};
 		memcpy(node.id_.data(), ids6.data() + i * id_size, node.id_.size());
 		memcpy(&node.address.get_in6_addr(), &addresses6.at(i), sizeof(sockaddr_in6));

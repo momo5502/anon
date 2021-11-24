@@ -30,7 +30,7 @@ namespace std
 class dht
 {
 public:
-	enum class protocol 
+	enum class protocol
 	{
 		v4,
 		v6,
@@ -38,14 +38,15 @@ public:
 
 	using id = std::array<unsigned char, 20>;
 	using results = std::function<void(const std::vector<network::address>&)>;
-	using data_transmitter = std::function<void(protocol, const network::address& destination, const std::string& data)>;
+	using data_transmitter = std::function<void(protocol, const network::address& destination, const std::string& data)>
+	;
 
 	struct node
 	{
 		id id_{};
 		network::address address{};
 	};
-	
+
 	dht(data_transmitter transmitter);
 	~dht();
 
@@ -56,7 +57,7 @@ public:
 	dht& operator=(dht&&) = delete;
 
 	void insert_node(const node& node);
-	
+
 	bool try_ping(const std::string& address);
 	void ping(const network::address& address);
 	void search(const std::string& keyword, results results, uint16_t port);
@@ -64,14 +65,14 @@ public:
 
 	std::chrono::milliseconds run_frame();
 	std::chrono::high_resolution_clock::time_point run_frame_time_point();
-    
+
 	void on_data(protocol protocol, const network::address& address, const std::string& data);
 	int on_send(protocol protocol, const void* buf, const int len, const int flags,
-               const struct sockaddr* to, const int tolen);
+	            const struct sockaddr* to, const int tolen);
 
 private:
 	id id_;
-	
+
 	struct search_entry
 	{
 		results callback{};
