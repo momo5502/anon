@@ -42,7 +42,7 @@ public:
 
 	struct node
 	{
-		id id{};
+		id id_{};
 		network::address address{};
 	};
 	

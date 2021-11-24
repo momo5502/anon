@@ -80,7 +80,7 @@ namespace
 		data.append(reinterpret_cast<const char*>(&ipv6_node_count), sizeof(ipv6_node_count));
 
 		for(const auto& node : ipv4_nodes) {
-			data.append(reinterpret_cast<const char*>(node.id.data()), node.id.size());
+			data.append(reinterpret_cast<const char*>(node.id_.data()), node.id_.size());
 
 			const auto& in_addr = node.address.get_in_addr();
 			const auto addr_size = sizeof(in_addr.sin_addr);
@@ -95,7 +95,7 @@ namespace
 		}
 
 		for(const auto& node : ipv6_nodes) {
-			data.append(reinterpret_cast<const char*>(node.id.data()), node.id.size());
+			data.append(reinterpret_cast<const char*>(node.id_.data()), node.id_.size());
 
 			const auto& in6_addr = node.address.get_in6_addr();
 			const auto addr6_size = sizeof(in6_addr.sin6_addr);
@@ -157,7 +157,7 @@ namespace
 		for(uint32_t i = 0; i < ipv4_node_count; ++i) {
 			dht::node node{};
 
-			read_data(node.id.data(), node.id.size());
+			read_data(node.id_.data(), node.id_.size());
 
 			in_addr address{};
 			static_assert(sizeof(address) == 4);
@@ -177,7 +177,7 @@ namespace
 		for(uint32_t i = 0; i < ipv4_node_count; ++i) {
 			dht::node node{};
 
-			read_data(node.id.data(), node.id.size());
+			read_data(node.id_.data(), node.id_.size());
 
 			in6_addr address{};
 			static_assert(sizeof(address) == 16);
@@ -348,7 +348,7 @@ int dht::on_send(const protocol protocol, const void* buf, const int len, const 
 void dht::insert_node(const node& node)
 {
 	auto address = node.address;
-	dht_insert_node(node.id.data(), &address.get_addr(), address.get_size());
+	dht_insert_node(node.id_.data(), &address.get_addr(), address.get_size());
 }
 
 bool dht::try_ping(const std::string& address)
@@ -536,14 +536,14 @@ void dht::save_state() const
 	
 	for(size_t i = 0; i < ipv4_nodes; ++i) {
 		node node{};
-		memcpy(node.id.data(), ids.data() + i * id_size, node.id.size());
+		memcpy(node.id_.data(), ids.data() + i * id_size, node.id_.size());
 		memcpy(&node.address.get_in_addr(), &addresses.at(i), sizeof(sockaddr_in));
 		store.nodes.emplace_back(std::move(node));
 	}
 
 	for(size_t i = 0; i < ipv6_nodes; ++i) {
 		node node{};
-		memcpy(node.id.data(), ids6.data() + i * id_size, node.id.size());
+		memcpy(node.id_.data(), ids6.data() + i * id_size, node.id_.size());
 		memcpy(&node.address.get_in6_addr(), &addresses6.at(i), sizeof(sockaddr_in6));
 		store.nodes.emplace_back(std::move(node));
 	}
