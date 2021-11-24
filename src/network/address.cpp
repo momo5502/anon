@@ -93,14 +93,14 @@ namespace network
 		return false;
 	}
 
-	void address::set_ipv4(const in_addr addr)
+	void address::set_ipv4(const in_addr& addr)
 	{
 		ZeroMemory(&this->address4_, sizeof(this->address4_));
 		this->address4_.sin_family = AF_INET;
 		this->address4_.sin_addr = addr;
 	}
 
-	void address::set_ipv6(const in6_addr addr)
+	void address::set_ipv6(const in6_addr& addr)
 	{
 		ZeroMemory(&this->address6_, sizeof(this->address6_));
 		this->address6_.sin6_family = AF_INET6;
@@ -255,6 +255,16 @@ namespace network
 		default:
 			return static_cast<int>(sizeof(this->address_));
 		}
+	}
+
+	bool address::is_ipv4() const
+	{
+		return this->address_.sa_family == AF_INET;
+	}
+
+	bool address::is_ipv6() const
+	{
+		return this->address_.sa_family == AF_INET6;
 	}
 
 	void address::parse(std::string addr)

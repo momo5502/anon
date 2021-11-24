@@ -40,6 +40,12 @@ public:
 	using results = std::function<void(const std::vector<network::address>&)>;
 	using data_transmitter = std::function<void(protocol, const network::address& destination, const std::string& data)>;
 
+	struct node
+	{
+		id id{};
+		network::address address{};
+	};
+	
 	dht(data_transmitter transmitter);
 	~dht();
 
@@ -49,6 +55,8 @@ public:
 	dht(dht&&) = delete;
 	dht& operator=(dht&&) = delete;
 
+	void insert_node(const node& node);
+	
 	bool try_ping(const std::string& address);
 	void ping(const network::address& address);
 	void search(const std::string& keyword, results results, uint16_t port);
@@ -62,6 +70,8 @@ public:
                const struct sockaddr* to, const int tolen);
 
 private:
+	id id_;
+	
 	struct search_entry
 	{
 		results callback{};
@@ -78,4 +88,6 @@ private:
 	static void callback_static(void* closure, int event, const unsigned char* info_hash, const void* data,
 	                            size_t data_len);
 	void callback(int event, const unsigned char* info_hash, const void* data, size_t data_len);
+
+	void save_state() const;
 };

@@ -13,8 +13,8 @@ namespace network
 		address(const sockaddr_in6& addr);
 		address(const sockaddr* addr, int length);
 
-		void set_ipv4(in_addr addr);
-		void set_ipv6(in6_addr addr);
+		void set_ipv4(const in_addr& addr);
+		void set_ipv6(const in6_addr& addr);
 		void set_address(const sockaddr* addr, int length);
 
 		void set_port(unsigned short port);
@@ -29,6 +29,9 @@ namespace network
 		const sockaddr_in6& get_in6_addr() const;
 
 		int get_size() const;
+
+		bool is_ipv4() const;
+		bool is_ipv6() const;
 
 		[[nodiscard]] bool is_local() const;
 		[[nodiscard]] std::string to_string() const;
