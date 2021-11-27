@@ -2,6 +2,8 @@
 
 #include "network/socket.hpp"
 
+#define poll WSAPoll
+
 namespace network
 {
 	socket::socket(const int af)
@@ -86,8 +88,8 @@ namespace network
 	}
 
 	bool socket::sleep(const std::chrono::milliseconds timeout) const
-	{
-		fd_set fdr;
+	{		
+		/*fd_set fdr;
 		FD_ZERO(&fdr);
 		FD_SET(this->socket_, &fdr);
 
@@ -109,7 +111,12 @@ namespace network
 			return socket_is_ready;
 		}
 
-		return !socket_is_ready;
+		return !socket_is_ready;*/
+
+		std::vector<const socket*> sockets{};
+		sockets.push_back(this);
+
+		return sleep_sockets(sockets, timeout);
 	}
 
 	bool socket::sleep_until(const std::chrono::high_resolution_clock::time_point time_point) const
@@ -126,5 +133,42 @@ namespace network
 	uint16_t socket::get_port() const
 	{
 		return this->port_;
+	}
+
+	bool socket::sleep_sockets(const std::vector<const socket*>& sockets, const std::chrono::milliseconds timeout)
+	{
+		std::vector<pollfd> pfds{};
+		pfds.resize(sockets.size());
+
+		for(size_t i = 0; i < sockets.size(); ++i) {
+			auto& pfd = pfds.at(i);
+			const auto& socket = sockets.at(i);
+
+			pfd.fd = socket->get_socket();
+			pfd.events = POLLIN;
+			pfd.revents = 0;
+		}
+
+		const auto retval = poll(pfds.data(), static_cast<uint32_t>(pfds.size()), static_cast<int>(timeout.count()));
+
+		if (retval == SOCKET_ERROR)
+		{
+			std::this_thread::sleep_for(1ms);
+			return socket_is_ready;
+		}
+
+		if (retval > 0)
+		{
+			return socket_is_ready;
+		}
+
+		return !socket_is_ready;
+	}
+
+	bool socket::sleep_sockets_until(const std::vector<const socket*>& sockets,
+	                                 const std::chrono::high_resolution_clock::time_point time_point)
+	{
+		const auto duration = time_point - std::chrono::high_resolution_clock::now();
+		return sleep_sockets(sockets, std::chrono::duration_cast<std::chrono::milliseconds>(duration));
 	}
 }

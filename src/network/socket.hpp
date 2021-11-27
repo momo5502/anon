@@ -38,6 +38,9 @@ namespace network
 		SOCKET get_socket() const;
 		uint16_t get_port() const;
 
+		static bool sleep_sockets(const std::vector<const socket*>& sockets, std::chrono::milliseconds timeout);
+		static bool sleep_sockets_until(const std::vector<const socket*>& sockets, std::chrono::high_resolution_clock::time_point time_point);
+
 	private:
 		uint16_t port_ = 0;
 		SOCKET socket_ = INVALID_SOCKET;
