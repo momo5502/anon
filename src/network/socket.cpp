@@ -2,7 +2,9 @@
 
 #include "network/socket.hpp"
 
+#ifdef _WIN32
 #define poll WSAPoll
+#endif
 
 namespace network
 {
