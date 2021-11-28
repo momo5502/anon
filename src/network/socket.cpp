@@ -6,6 +6,7 @@
 
 #ifdef _WIN32
 #define poll WSAPoll
+#define EWOULDBLOCK WSAEWOULDBLOCK
 #endif
 
 namespace network
@@ -77,11 +78,19 @@ namespace network
 	bool socket::receive(address& source, std::string& data) const
 	{
 		char buffer[0x2000];
-		socklen_t len = sizeof(source.get_in_addr());
+		socklen_t len = source.get_max_size();
 
 		const auto result = recvfrom(this->socket_, buffer, sizeof(buffer), 0, &source.get_addr(), &len);
-		if (result == SOCKET_ERROR) // Probably WSAEWOULDBLOCK
+		if (result == SOCKET_ERROR)
 		{
+			const auto error = GET_SOCKET_ERROR();
+#ifndef NDEBUG
+			if(error != EWOULDBLOCK)
+			{
+				console::warn("Receive failed with error: %d", error);
+			}
+#endif
+			
 			return false;
 		}
 

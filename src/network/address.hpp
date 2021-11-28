@@ -29,6 +29,7 @@ namespace network
 		const sockaddr_in6& get_in6_addr() const;
 
 		int get_size() const;
+		int get_max_size() const;
 
 		bool is_ipv4() const;
 		bool is_ipv6() const;

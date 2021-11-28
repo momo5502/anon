@@ -329,10 +329,6 @@ dht::dht(data_transmitter transmitter)
 	this->try_ping("dht.transmissionbt.com", 6881);
 	this->try_ping("dht.aelitis.com", 6881);
 
-	// TOX?
-	this->try_ping("tox.initramfs.io", 33445);
-	this->try_ping("tox.kurnevsky.net", 33445);
-
 	for (const auto& node : store.nodes)
 	{
 		this->insert_node(node);

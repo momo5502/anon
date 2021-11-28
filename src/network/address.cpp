@@ -40,14 +40,7 @@ namespace network
 	address::address()
 	{
 		initialize_wsa();
-		
-		const auto s = sizeof(this->address_);
-		const auto s4 = sizeof(this->address4_);
-		const auto s6 = sizeof(this->address6_);
-		const auto sstore = sizeof(this->storage_);
-		static_assert(std::max(sstore, std::max(s, std::max(s4, s6))) == sstore);
-		
-		ZeroMemory(&this->storage_, sstore);
+		ZeroMemory(&this->storage_, this->get_max_size());
 		
 		this->address_.sa_family = AF_UNSPEC;
 	}
@@ -268,6 +261,18 @@ namespace network
 		default:
 			return static_cast<int>(sizeof(this->address_));
 		}
+	}
+
+	int address::get_max_size() const
+	{
+		const auto s = sizeof(this->address_);
+		const auto s4 = sizeof(this->address4_);
+		const auto s6 = sizeof(this->address6_);
+		const auto sstore = sizeof(this->storage_);
+		const auto max_size = std::max(sstore, std::max(s, std::max(s4, s6)));
+		static_assert(max_size == sstore);
+		
+		return max_size;
 	}
 
 	bool address::is_ipv4() const
