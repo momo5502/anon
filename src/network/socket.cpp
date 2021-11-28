@@ -53,7 +53,7 @@ namespace network
 			this->port_ = target.get_port();
 		}
 		else {
-			console::error("Binding failed: %s %d", target.to_string(), GET_SOCKET_ERROR());
+			console::error("Binding failed: %s %d", target.to_string().data(), GET_SOCKET_ERROR());
 		}
 
 		return result;
