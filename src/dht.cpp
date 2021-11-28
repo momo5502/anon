@@ -341,7 +341,7 @@ dht::~dht()
 	{
 		this->save_state();
 	}
-	catch(std::exception& e)
+	catch (std::exception& e)
 	{
 		console::error("Failed to save DHT state: %s", e.what());
 	}
@@ -377,17 +377,17 @@ bool dht::try_ping(const std::string& hostname, const uint16_t port)
 {
 	bool pinged = false;
 	auto addresses = network::address::resolve_multiple(hostname);
-	
-	for(auto& address : addresses)
+
+	for (auto& address : addresses)
 	{
-		if(address.is_supported())
+		if (address.is_supported())
 		{
 			address.set_port(port);
 			this->ping(address);
 			pinged = true;
 		}
 	}
-	
+
 	return pinged;
 }
 

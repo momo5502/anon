@@ -18,7 +18,7 @@ namespace
 		network::address a6{};
 		a6.set_ipv6(in6addr_any);
 		a6.set_port(port);
-		
+
 		network::socket s{AF_INET};
 		s.set_blocking(false);
 		if (!s.bind(a))

@@ -44,9 +44,9 @@ namespace network
 		{
 			return !(*this == obj);
 		}
-		
+
 		static std::vector<address> resolve_multiple(const std::string& hostname);
-	
+
 	private:
 		union
 		{

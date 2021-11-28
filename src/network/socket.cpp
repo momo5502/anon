@@ -16,7 +16,8 @@ namespace network
 		initialize_wsa();
 		this->socket_ = ::socket(af, SOCK_DGRAM, IPPROTO_UDP);
 
-		if(af == AF_INET6) {
+		if (af == AF_INET6)
+		{
 			int i = 1;
 			setsockopt(this->socket_, IPPROTO_IPV6, IPV6_V6ONLY, reinterpret_cast<char*>(&i), sizeof(i));
 		}
@@ -85,12 +86,12 @@ namespace network
 		{
 #ifndef NDEBUG
 			const auto error = GET_SOCKET_ERROR();
-			if(error != EWOULDBLOCK)
+			if (error != EWOULDBLOCK)
 			{
 				console::warn("Receive failed with error: %d", error);
 			}
 #endif
-			
+
 			return false;
 		}
 
@@ -112,7 +113,7 @@ namespace network
 	}
 
 	bool socket::sleep(const std::chrono::milliseconds timeout) const
-	{		
+	{
 		/*fd_set fdr;
 		FD_ZERO(&fdr);
 		FD_SET(this->socket_, &fdr);
@@ -164,7 +165,8 @@ namespace network
 		std::vector<pollfd> pfds{};
 		pfds.resize(sockets.size());
 
-		for(size_t i = 0; i < sockets.size(); ++i) {
+		for (size_t i = 0; i < sockets.size(); ++i)
+		{
 			auto& pfd = pfds.at(i);
 			const auto& socket = sockets.at(i);
 

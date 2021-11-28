@@ -41,7 +41,7 @@ namespace network
 	{
 		initialize_wsa();
 		ZeroMemory(&this->storage_, this->get_max_size());
-		
+
 		this->address_.sa_family = AF_UNSPEC;
 	}
 
@@ -271,7 +271,7 @@ namespace network
 		const auto sstore = sizeof(this->storage_);
 		const auto max_size = std::max(sstore, std::max(s, std::max(s4, s6)));
 		static_assert(max_size == sstore);
-		
+
 		return max_size;
 	}
 
@@ -319,9 +319,9 @@ namespace network
 		});
 
 		const auto result = resolve_multiple(hostname);
-		for(const auto& addr : result)
+		for (const auto& addr : result)
 		{
-			if(addr.is_supported())
+			if (addr.is_supported())
 			{
 				this->set_address(&addr.get_addr(), addr.get_size());
 				return;
@@ -335,7 +335,7 @@ namespace network
 	std::vector<address> address::resolve_multiple(const std::string& hostname)
 	{
 		std::vector<address> results{};
-		
+
 		addrinfo* result = nullptr;
 		if (!getaddrinfo(hostname.data(), nullptr, nullptr, &result))
 		{
