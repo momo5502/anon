@@ -57,9 +57,6 @@ namespace network
 		{
 			this->port_ = target.get_port();
 		}
-		else {
-			console::error("Binding failed: %s %d", target.to_string().data(), GET_SOCKET_ERROR());
-		}
 
 		return result;
 	}
@@ -68,9 +65,10 @@ namespace network
 	{
 		const int res = sendto(this->socket_, data.data(), static_cast<int>(data.size()), 0, &target.get_addr(),
 		                       target.get_size());
-		if(res == SOCKET_ERROR) {
+		if (res == SOCKET_ERROR)
+		{
 			const int error = GET_SOCKET_ERROR();
-			console::error("Sendto error: %s %d (%d)", target.to_string().data(), error, target.get_addr().sa_family);
+			console::warn("Sendto error: %s %d (%d)", target.to_string().data(), error, target.get_addr().sa_family);
 		}
 
 		return res == static_cast<int>(data.size());
