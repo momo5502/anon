@@ -4,10 +4,12 @@
 
 #ifdef _WIN32
 using socklen_t = int;
+#define GET_SOCKET_ERROR() (WSAGetLastError())
 #else
 		using SOCKET = int;
 #define INVALID_SOCKET  (SOCKET)(~0)
 #define SOCKET_ERROR            (-1)
+#define GET_SOCKET_ERROR() (errno)
 #endif
 
 namespace network
