@@ -12,7 +12,7 @@ namespace
 		console::log("Creating socket on port %hu", port);
 
 		network::address a{};
-		a.set_ipv4(in4addr_any);
+		a.set_ipv4(in_addr{INADDR_ANY});
 		a.set_port(port);
 
 		network::address a6{};
