@@ -14,6 +14,11 @@ namespace network
 	{
 		initialize_wsa();
 		this->socket_ = ::socket(af, SOCK_DGRAM, IPPROTO_UDP);
+
+		if(af == AF_INET6) {
+			int i = 1;
+			setsockopt(this->socket_, IPPROTO_IPV6, IPV6_V6ONLY, reinterpret_cast<char*>(&i), sizeof(i));
+		}
 	}
 
 	socket::~socket()
