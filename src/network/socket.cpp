@@ -83,8 +83,8 @@ namespace network
 		const auto result = recvfrom(this->socket_, buffer, sizeof(buffer), 0, &source.get_addr(), &len);
 		if (result == SOCKET_ERROR)
 		{
-			const auto error = GET_SOCKET_ERROR();
 #ifndef NDEBUG
+			const auto error = GET_SOCKET_ERROR();
 			if(error != EWOULDBLOCK)
 			{
 				console::warn("Receive failed with error: %d", error);
