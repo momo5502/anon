@@ -32,6 +32,7 @@ namespace network
 
 		bool is_ipv4() const;
 		bool is_ipv6() const;
+		bool is_supported() const;
 
 		[[nodiscard]] bool is_local() const;
 		[[nodiscard]] std::string to_string() const;
@@ -42,13 +43,16 @@ namespace network
 		{
 			return !(*this == obj);
 		}
-
+		
+		static std::vector<address> resolve_multiple(const std::string& hostname);
+	
 	private:
 		union
 		{
-			sockaddr address_{};
+			sockaddr address_;
 			sockaddr_in address4_;
 			sockaddr_in6 address6_;
+			sockaddr_storage storage_;
 		};
 
 		void parse(std::string addr);

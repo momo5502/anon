@@ -2,8 +2,6 @@
 
 #include "network/socket.hpp"
 #include <array>
-#include <atomic>
-#include <string_view>
 #include <unordered_map>
 
 namespace std
@@ -58,7 +56,7 @@ public:
 
 	void insert_node(const node& node);
 
-	bool try_ping(const std::string& address);
+	bool try_ping(const std::string& hostname, uint16_t port);
 	void ping(const network::address& address);
 	void search(const std::string& keyword, results results, uint16_t port);
 	void search(const id& hash, results results, uint16_t port);
@@ -67,11 +65,11 @@ public:
 	std::chrono::high_resolution_clock::time_point run_frame_time_point();
 
 	void on_data(protocol protocol, const network::address& address, const std::string& data);
-	int on_send(protocol protocol, const void* buf, const int len, const int flags,
-	            const struct sockaddr* to, const int tolen);
+	int on_send(protocol protocol, const void* buf, int len, int flags,
+	            const struct sockaddr* to, int tolen);
 
 private:
-	id id_;
+	id id_{};
 
 	struct search_entry
 	{

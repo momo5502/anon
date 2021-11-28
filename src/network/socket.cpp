@@ -2,6 +2,8 @@
 
 #include "network/socket.hpp"
 
+#include "console.hpp"
+
 #ifdef _WIN32
 #define poll WSAPoll
 #endif
@@ -45,8 +47,7 @@ namespace network
 
 	bool socket::bind(const address& target)
 	{
-		const auto result = ::bind(this->socket_, &target.get_addr(), sizeof(target.get_addr())) == 0;
-
+		const auto result = ::bind(this->socket_, &target.get_addr(), target.get_size()) == 0;
 		if (result)
 		{
 			this->port_ = target.get_port();
@@ -55,10 +56,11 @@ namespace network
 		return result;
 	}
 
-	void socket::send(const address& target, const std::string& data) const
+	bool socket::send(const address& target, const std::string& data) const
 	{
-		sendto(this->socket_, data.data(), static_cast<int>(data.size()), 0, &target.get_addr(),
-		       sizeof(target.get_addr()));
+		const int res = sendto(this->socket_, data.data(), static_cast<int>(data.size()), 0, &target.get_addr(),
+		                       target.get_size());
+		return res == static_cast<int>(data.size());
 	}
 
 	bool socket::receive(address& source, std::string& data) const

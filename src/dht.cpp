@@ -1,9 +1,11 @@
 #include "std_include.hpp"
 #include "dht.hpp"
-#include "utils/io.hpp"
-#include <random>
-
 #include "console.hpp"
+#include "utils/io.hpp"
+
+#include <atomic>
+#include <string_view>
+#include <random>
 
 namespace
 {
@@ -322,11 +324,14 @@ dht::dht(data_transmitter transmitter)
 	dht_init(fd_v4, fd_v6, this->id_.data(),
 	         reinterpret_cast<const unsigned char*>("JC\0\0"));
 
-	this->try_ping("router.bittorrent.com:6881");
-	this->try_ping("router.utorrent.com:6881");
-	this->try_ping("router.bitcomet.com:6881");
-	this->try_ping("dht.transmissionbt.com:6881");
-	this->try_ping("dht.aelitis.com:6881");
+	this->try_ping("router.bittorrent.com", 6881);
+	this->try_ping("router.utorrent.com", 6881);
+	this->try_ping("dht.transmissionbt.com", 6881);
+	this->try_ping("dht.aelitis.com", 6881);
+
+	// TOX?
+	this->try_ping("tox.initramfs.io", 33445);
+	this->try_ping("tox.kurnevsky.net", 33445);
 
 	for (const auto& node : store.nodes)
 	{
@@ -336,7 +341,14 @@ dht::dht(data_transmitter transmitter)
 
 dht::~dht()
 {
-	this->save_state();
+	try
+	{
+		this->save_state();
+	}
+	catch(std::exception& e)
+	{
+		console::error("Failed to save DHT state: %s", e.what());
+	}
 
 	dht_uninit();
 	delete_fd_mappings(*this);
@@ -346,14 +358,14 @@ dht::~dht()
 void dht::on_data(protocol /*protocol*/, const network::address& address, const std::string& data)
 {
 	time_t tosleep = 0;
-	dht_periodic(data.data(), data.size(), &address.get_addr(), sizeof(address.get_in_addr()), &tosleep,
+	dht_periodic(data.data(), data.size(), &address.get_addr(), address.get_size(), &tosleep,
 	             &dht::callback_static, this);
 }
 
 int dht::on_send(const protocol protocol, const void* buf, const int len, const int /*flags*/,
-                 const struct sockaddr* to, const int /*tolen*/)
+                 const struct sockaddr* to, const int tolen)
 {
-	const network::address target{*reinterpret_cast<const sockaddr_in*>(to)};
+	const network::address target{to, tolen};
 	const std::string string{reinterpret_cast<const char*>(buf), static_cast<size_t>(len)};
 	this->transmitter_(protocol, target, string);
 	return len;
@@ -365,22 +377,27 @@ void dht::insert_node(const node& node)
 	dht_insert_node(node.id_.data(), &address.get_addr(), address.get_size());
 }
 
-bool dht::try_ping(const std::string& address)
+bool dht::try_ping(const std::string& hostname, const uint16_t port)
 {
-	try
+	bool pinged = false;
+	auto addresses = network::address::resolve_multiple(hostname);
+	
+	for(auto& address : addresses)
 	{
-		this->ping(network::address{address});
-		return true;
+		if(address.is_supported())
+		{
+			address.set_port(port);
+			this->ping(address);
+			pinged = true;
+		}
 	}
-	catch (...)
-	{
-	}
-	return false;
+	
+	return pinged;
 }
 
 void dht::ping(const network::address& address)
 {
-	dht_ping_node(&address.get_addr(), sizeof(address.get_in_addr()));
+	dht_ping_node(&address.get_addr(), address.get_size());
 }
 
 void dht::search(const std::string& keyword, results results, const uint16_t port)
@@ -415,7 +432,7 @@ std::chrono::milliseconds dht::run_frame()
 
 	time_t tosleep = 0;
 	dht_periodic(nullptr, 0, nullptr, 0, &tosleep, &dht::callback_static, this);
-	return std::chrono::seconds{tosleep};
+	return std::min(std::chrono::seconds{tosleep}, 3s);
 }
 
 std::chrono::high_resolution_clock::time_point dht::run_frame_time_point()

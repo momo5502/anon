@@ -11,9 +11,14 @@ namespace
 	{
 		console::log("Creating socket on port %hu", port);
 
-		network::address a{"0.0.0.0"};
+		network::address a{};
+		a.set_ipv4(in4addr_any);
 		a.set_port(port);
 
+		network::address a6{};
+		a6.set_ipv6(in6addr_any);
+		a6.set_port(port);
+		
 		network::socket s{AF_INET};
 		s.set_blocking(false);
 		if (!s.bind(a))
@@ -21,12 +26,23 @@ namespace
 			throw std::runtime_error("Failed to bind socket!");
 		}
 
+		network::socket s6{AF_INET6};
+		s6.set_blocking(false);
+		if (!s6.bind(a6))
+		{
+			throw std::runtime_error("Failed to bind socket!");
+		}
+
 		dht dht{
-			[&s](const dht::protocol protocol, const network::address& destination, const std::string& data)
+			[&s, &s6](const dht::protocol protocol, const network::address& destination, const std::string& data)
 			{
 				if (protocol == dht::protocol::v4)
 				{
 					s.send(destination, data);
+				}
+				else if (protocol == dht::protocol::v6)
+				{
+					s6.send(destination, data);
 				}
 			}
 		};
@@ -54,14 +70,24 @@ namespace
 		std::string data{};
 		network::address address{};
 
+		std::vector<const network::socket*> sockets{};
+		sockets.push_back(&s);
+		sockets.push_back(&s6);
+
 		while (!kill)
 		{
 			const auto time = dht.run_frame();
-			(void)s.sleep(time);
+			network::socket::sleep_sockets(sockets, time);
 
 			while (s.receive(address, data))
 			{
 				dht.on_data(dht::protocol::v4, address, data);
+				data.clear();
+			}
+
+			while (s6.receive(address, data))
+			{
+				dht.on_data(dht::protocol::v6, address, data);
 				data.clear();
 			}
 		}

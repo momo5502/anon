@@ -40,6 +40,15 @@ namespace network
 	address::address()
 	{
 		initialize_wsa();
+		
+		const auto s = sizeof(this->address_);
+		const auto s4 = sizeof(this->address4_);
+		const auto s6 = sizeof(this->address6_);
+		const auto sstore = sizeof(this->storage_);
+		static_assert(std::max(sstore, std::max(s, std::max(s4, s6))) == sstore);
+		
+		ZeroMemory(&this->storage_, sstore);
+		
 		this->address_.sa_family = AF_UNSPEC;
 	}
 
@@ -154,22 +163,26 @@ namespace network
 	std::string address::to_string() const
 	{
 		char buffer[1000] = {0};
+		std::string addr;
 
 		switch (this->address_.sa_family)
 		{
 		case AF_INET:
 			inet_ntop(this->address_.sa_family, &this->address4_.sin_addr, buffer, sizeof(buffer));
+			addr = std::string(buffer);
 			break;
 		case AF_INET6:
 			inet_ntop(this->address_.sa_family, &this->address6_.sin6_addr, buffer, sizeof(buffer));
+			addr = "[" + std::string(buffer) + "]";
 			break;
 		default:
 			buffer[0] = '?';
 			buffer[1] = 0;
+			addr = std::string(buffer);
 			break;
 		}
 
-		return std::string(buffer) + ":"s + std::to_string(this->get_port());
+		return addr + ":"s + std::to_string(this->get_port());
 	}
 
 	bool address::is_local() const
@@ -267,6 +280,11 @@ namespace network
 		return this->address_.sa_family == AF_INET6;
 	}
 
+	bool address::is_supported() const
+	{
+		return is_ipv4() || is_ipv6();
+	}
+
 	void address::parse(std::string addr)
 	{
 		std::optional<uint16_t> port_value{};
@@ -295,6 +313,24 @@ namespace network
 			this->set_port(port);
 		});
 
+		const auto result = resolve_multiple(hostname);
+		for(const auto& addr : result)
+		{
+			if(addr.is_supported())
+			{
+				this->set_address(&addr.get_addr(), addr.get_size());
+				return;
+			}
+		}
+
+		port_reset_action.cancel();
+		throw std::runtime_error{"Unable to resolve hostname: " + hostname};
+	}
+
+	std::vector<address> address::resolve_multiple(const std::string& hostname)
+	{
+		std::vector<address> results{};
+		
 		addrinfo* result = nullptr;
 		if (!getaddrinfo(hostname.data(), nullptr, nullptr, &result))
 		{
@@ -305,16 +341,16 @@ namespace network
 
 			for (auto* i = result; i; i = i->ai_next)
 			{
-				if (i->ai_addr->sa_family == AF_INET || i->ai_addr->sa_family == AF_INET6)
+				if (i->ai_family == AF_INET || i->ai_family == AF_INET6)
 				{
-					this->set_address(i->ai_addr, static_cast<int>(i->ai_addrlen));
-					return;
+					address a{};
+					a.set_address(i->ai_addr, static_cast<int>(i->ai_addrlen));
+					results.emplace_back(std::move(a));
 				}
 			}
 		}
 
-		port_reset_action.cancel();
-		throw std::runtime_error{"Unable to resolve hostname: " + hostname};
+		return results;
 	}
 }
 

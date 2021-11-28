@@ -26,7 +26,7 @@ namespace network
 
 		bool bind(const address& target);
 
-		void send(const address& target, const std::string& data) const;
+		[[maybe_unused]] bool send(const address& target, const std::string& data) const;
 		bool receive(address& source, std::string& data) const;
 
 		bool set_blocking(bool blocking);
