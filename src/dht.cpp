@@ -423,6 +423,7 @@ std::chrono::milliseconds dht::run_frame()
 		{
 			entry.second.last_query = now;
 			dht_search(entry.first.data(), entry.second.port, AF_INET, &dht::callback_static, this);
+			dht_search(entry.first.data(), entry.second.port, AF_INET6, &dht::callback_static, this);
 		}
 	}
 
