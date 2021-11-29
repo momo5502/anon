@@ -68,7 +68,7 @@ namespace
 
 			if (getenv("CI") != nullptr)
 			{
-				console::info("Terminating server, as running in a CI instance (CI environment variable is set");
+				console::info("Terminating server, as running in a CI instance ('CI' environment variable is set)");
 				kill = true;
 			}
 		}, s.get_port());
