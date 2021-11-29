@@ -212,6 +212,7 @@ jobs:
 
   test-mac:
     name: Test macOS
+    needs: 
       - build-lin
       - build-win
       - build-mac
@@ -231,6 +232,7 @@ jobs:
 
   test-win:
     name: Test Windows
+    needs: 
       - build-lin
       - build-win
       - build-mac
