@@ -190,9 +190,12 @@ jobs:
           path: |
             build/bin/${{matrix.platform}}/${{matrix.configuration}}/anon
 
-  test:
-    name: Run tests
-    needs: build-lin
+  test-lin:
+    name: Test Linux
+    needs: 
+      - build-lin
+      - build-win
+      - build-mac
     runs-on: ubuntu-latest
     if: github.event.inputs.run_tests == 'true'
     steps:
@@ -206,3 +209,38 @@ jobs:
 
       - name: Run test
         run: ./anon
+
+  test-mac:
+    name: Test macOS
+      - build-lin
+      - build-win
+      - build-mac
+    runs-on: macOS-11
+    if: github.event.inputs.run_tests == 'true'
+    steps:
+      - name: Download macOS Release x64 binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: Linux macOS x64 binaries
+
+      - name: Set file permission
+        run: chmod +x ./anon
+
+      - name: Run test
+        run: ./anon
+
+  test-win:
+    name: Test Windows
+      - build-lin
+      - build-win
+      - build-mac
+    runs-on: windows-latest
+    if: github.event.inputs.run_tests == 'true'
+    steps:
+      - name: Download Windows Release x64 binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: Linux Windows x64 binaries
+
+      - name: Run test
+        run: .\anon.exe
