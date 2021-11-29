@@ -7,34 +7,27 @@
 
 namespace network
 {
-	namespace
+	void initialize_wsa()
 	{
-		class wsa_initializer
+#ifdef _WIN32
+		static struct wsa_initializer
 		{
 		public:
 			wsa_initializer()
 			{
-#ifdef _WIN32
 				WSADATA wsa_data;
 				if (WSAStartup(MAKEWORD(2, 2), &wsa_data))
 				{
 					throw std::runtime_error("Unable to initialize WSA");
 				}
-#endif
 			}
 
 			~wsa_initializer()
 			{
-#ifdef _WIN32
 				WSACleanup();
-#endif
 			}
-		};
-	}
-
-	void initialize_wsa()
-	{
-		static wsa_initializer wsa;
+		} _;
+#endif
 	}
 
 	address::address()
@@ -69,6 +62,12 @@ namespace network
 		this->set_address(addr, length);
 	}
 
+	void address::set_ipv4(const uint32_t ip)
+	{
+		in_addr addr{};
+		addr.s_addr = ip;
+		this->set_ipv4(addr);
+	}
 
 	bool address::operator==(const address& obj) const
 	{

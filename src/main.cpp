@@ -59,11 +59,17 @@ namespace
 			kill = true;
 		});
 
-		dht.search("X-LABS", [](const std::vector<network::address>& addresses)
+		dht.search("X-LABS", [&kill](const std::vector<network::address>& addresses)
 		{
 			for (const auto& address : addresses)
 			{
 				console::info("%s", address.to_string().data());
+			}
+
+			if (getenv("CI") != nullptr)
+			{
+				console::info("Terminating server, as running in a CI instance (CI environment variable is set");
+				kill = true;
 			}
 		}, s.get_port());
 

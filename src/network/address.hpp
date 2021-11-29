@@ -13,6 +13,7 @@ namespace network
 		address(const sockaddr_in6& addr);
 		address(const sockaddr* addr, int length);
 
+		void set_ipv4(uint32_t ip);
 		void set_ipv4(const in_addr& addr);
 		void set_ipv6(const in6_addr& addr);
 		void set_address(const sockaddr* addr, int length);

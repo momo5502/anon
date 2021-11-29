@@ -8,6 +8,12 @@ on:
     branches:
       - "*"
     types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      run_tests:
+        description: "Run the tests?"
+        required: true
+
 jobs:
   build-win:
     name: Build Windows
@@ -183,3 +189,17 @@ jobs:
           name: macOS ${{matrix.configuration}} ${{matrix.arch}} binaries
           path: |
             build/bin/${{matrix.platform}}/${{matrix.configuration}}/anon
+
+  test:
+    name: Run tests
+    needs: build-lin
+    runs-on: ubuntu-latest
+    if: github.event.inputs.run_tests == 'true'
+    steps:
+      - name: Download Release binary
+        uses: actions/download-artifact@v2
+        with:
+          name: Linux Release x64
+
+      - name: Run test
+        run: ./anon
