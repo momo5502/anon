@@ -222,7 +222,7 @@ jobs:
       - name: Download macOS Release x64 binaries
         uses: actions/download-artifact@v2
         with:
-          name: Linux macOS x64 binaries
+          name: macOS Release x64 binaries
 
       - name: Set file permission
         run: chmod +x ./anon
@@ -242,7 +242,7 @@ jobs:
       - name: Download Windows Release x64 binaries
         uses: actions/download-artifact@v2
         with:
-          name: Linux Windows x64 binaries
+          name: Windows Release x64 binaries
 
       - name: Run test
         run: .\anon.exe
