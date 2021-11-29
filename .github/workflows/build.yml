@@ -201,5 +201,8 @@ jobs:
         with:
           name: Linux Release x64 binaries
 
+      - name: Set file permission
+        run: chmod +x ./anon
+
       - name: Run test
         run: ./anon
