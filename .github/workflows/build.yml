@@ -192,7 +192,7 @@ jobs:
 
   test-lin:
     name: Test Linux
-    timeout-minutes: 15
+    timeout-minutes: 20
     needs: 
       - build-lin
     runs-on: ubuntu-latest
@@ -211,7 +211,7 @@ jobs:
 
   test-mac:
     name: Test macOS
-    timeout-minutes: 15
+    timeout-minutes: 20
     needs: 
       - build-mac
     runs-on: macOS-11
@@ -230,7 +230,7 @@ jobs:
 
   test-win:
     name: Test Windows
-    timeout-minutes: 15
+    timeout-minutes: 20
     needs: 
       - build-win
     runs-on: windows-latest

@@ -104,7 +104,7 @@ uint16_t parse_port(const int argc, const char** argv)
 {
 	if (argc <= 1)
 	{
-		return 20811;
+		return 6881;
 	}
 
 	const auto port_string = argv[1];
