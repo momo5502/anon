@@ -192,10 +192,9 @@ jobs:
 
   test-lin:
     name: Test Linux
+    timeout-minutes: 15
     needs: 
       - build-lin
-      - build-win
-      - build-mac
     runs-on: ubuntu-latest
     if: github.event.inputs.run_tests == 'true'
     steps:
@@ -212,9 +211,8 @@ jobs:
 
   test-mac:
     name: Test macOS
+    timeout-minutes: 15
     needs: 
-      - build-lin
-      - build-win
       - build-mac
     runs-on: macOS-11
     if: github.event.inputs.run_tests == 'true'
@@ -232,10 +230,9 @@ jobs:
 
   test-win:
     name: Test Windows
+    timeout-minutes: 15
     needs: 
-      - build-lin
       - build-win
-      - build-mac
     runs-on: windows-latest
     if: github.event.inputs.run_tests == 'true'
     steps:
