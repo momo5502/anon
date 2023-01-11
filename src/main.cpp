@@ -47,7 +47,7 @@ namespace
 			}
 		};
 
-		volatile bool kill = false;
+		std::atomic_bool kill{false};
 		console::signal_handler handler([&]()
 		{
 			if (!kill)
