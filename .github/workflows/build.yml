@@ -54,7 +54,7 @@ jobs:
         run: msbuild /m /v:minimal /p:Configuration=${{matrix.configuration}} /p:Platform=${{matrix.platform}} build/anon.sln
 
       - name: Upload ${{matrix.configuration}} ${{matrix.arch}} binaries
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: Windows ${{matrix.configuration}} ${{matrix.arch}} binaries
           path: |
@@ -160,7 +160,7 @@ jobs:
           make config=${{matrix.config}}_${{matrix.platform}} -j$(sysctl -n hw.logicalcpu)
 
       - name: Upload ${{matrix.configuration}} ${{matrix.arch}} binaries
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: macOS ${{matrix.configuration}} ${{matrix.arch}} binaries
           path: |
