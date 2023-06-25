@@ -98,7 +98,7 @@ jobs:
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get update
-          sudo apt-get -y install gcc-multilib g++-multilib libcurl4-gnutls-dev:i386
+          sudo apt-get -y install gcc-multilib g++-multilib libgcc-s1:i386 libcurl4-gnutls-dev:i386
 
       - name: Generate project files
         run: ./generate.sh
