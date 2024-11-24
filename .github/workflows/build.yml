@@ -190,7 +190,7 @@ jobs:
     timeout-minutes: 20
     needs: 
       - build-mac
-    runs-on: macOS-11
+    runs-on: macos-latest
     if: github.event.inputs.run_tests == 'true'
     steps:
       - name: Download macOS Release x64 binaries
