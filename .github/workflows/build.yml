@@ -175,7 +175,7 @@ jobs:
     if: github.event.inputs.run_tests == 'true'
     steps:
       - name: Download Linux Release x64 binaries
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: Linux Release x64 binaries
 
@@ -194,7 +194,7 @@ jobs:
     if: github.event.inputs.run_tests == 'true'
     steps:
       - name: Download macOS Release x64 binaries
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: macOS Release x64 binaries
 
@@ -213,7 +213,7 @@ jobs:
     if: github.event.inputs.run_tests == 'true'
     steps:
       - name: Download Windows Release x64 binaries
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: Windows Release x64 binaries
 
