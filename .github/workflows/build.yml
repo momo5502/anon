@@ -120,7 +120,7 @@ jobs:
 
   build-mac:
     name: Build macOS
-    runs-on: macOS-11 #macos-latest
+    runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
